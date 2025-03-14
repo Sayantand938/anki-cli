@@ -37,6 +37,7 @@
     "openai": "^4.87.3",
     "ora": "^8.2.0",
     "shx": "^0.3.4",
+    "which": "^5.0.0",
     "winston": "^3.17.0",
     "winston-daily-rotate-file": "^5.0.0"
   },

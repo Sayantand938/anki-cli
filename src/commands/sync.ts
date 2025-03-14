@@ -75,5 +75,3 @@ function printInstructions(localIP: string) {
     console.log(`🔑 Password: ${chalk.cyan(DEFAULT_PASSWORD)}`);
     console.log(chalk.green("\n✅ Server is now running. Press Ctrl+C to stop.\n"));
 }
-
-
