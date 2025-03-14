@@ -1,14 +1,15 @@
-// src/cli.ts
 import { Command } from 'commander';
 import { exportAction } from './commands/export.js';
 import { explainAction } from './commands/explain.js';
-import { tagAction } from './commands/tag.js'; // Import the new tag command
+import { tagAction } from './commands/tag.js'; // Import the tag command
+import { syncAction } from './commands/sync.js'; // Import the sync command
 
 // Initialize CLI program
 const program = new Command();
 
 program.name('anki-cli').description('A sample CLI tool').version('1.0.0');
 
+// Export Command
 program
   .command('export')
   .description(
@@ -16,6 +17,7 @@ program
   )
   .action(exportAction);
 
+// Explain Command
 program
   .command('explain')
   .description(
@@ -23,10 +25,17 @@ program
   )
   .action(explainAction);
 
+// Tag Command
 program
-  .command('tag') // Add the tag command
+  .command('tag') 
   .description("Tags notes in the 'Custom Study Session' deck with a topic tag")
   .action(tagAction);
+
+// Sync Command (Newly Added)
+program
+  .command('sync')
+  .description('Starts the Anki Sync Server for syncing media files')
+  .action(syncAction);
 
 // Show help if no arguments are passed
 if (!process.argv.slice(2).length) {
