@@ -3,6 +3,7 @@ import { program } from "commander";
 import { registerSyncCommand } from "./commands/sync";
 import { registerAddCommand } from "./commands/add";
 import { registerFetchCommand } from "./commands/fetch";
+import { registerRecordingsCommand } from "./commands/recordings"; // <--- Import new command
 import { version } from "../package.json";
 
 async function main() {
@@ -14,6 +15,7 @@ async function main() {
   registerSyncCommand(program);
   registerAddCommand(program);
   registerFetchCommand(program);
+  registerRecordingsCommand(program); // <--- Register new command
 
   program.on("command:*", () => {
     console.error(
@@ -25,6 +27,7 @@ async function main() {
 
   await program.parseAsync(process.argv);
 
+  // Keep the existing logic for handling bare calls or invalid commands
   const BARE_CALL = process.argv.slice(2).length === 0;
   const firstArg = process.argv[2];
   const KNOWN_COMMAND_CALLED = firstArg && program.commands.some(cmd => cmd.name() === firstArg || cmd.aliases().includes(firstArg));
@@ -45,9 +48,17 @@ async function main() {
 main().catch((error) => {
   console.error("\n❌ An unexpected error occurred:");
   if (error instanceof Error) {
-    console.error(error.message);
+    // Check if it's a prompt cancellation error (empty string)
+    if ((error as any).message === '') {
+        console.log("Operation cancelled.");
+        process.exitCode = 0; // Treat cancellation as non-error exit
+    } else {
+        console.error(error.message);
+        process.exitCode = 1;
+    }
   } else {
     console.error(error);
+    process.exitCode = 1;
   }
-  process.exit(1);
+  // process.exit(1); // Let the process exit naturally based on exitCode
 });
