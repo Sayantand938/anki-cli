@@ -2,8 +2,6 @@
 import { program } from "commander";
 import { registerSyncCommand } from "./commands/sync";
 import { registerAddCommand } from "./commands/add";
-import { registerFetchCommand } from "./commands/fetch";
-import { registerRecordingsCommand } from "./commands/recordings"; // <--- Import new command
 import { version } from "../package.json";
 
 async function main() {
@@ -13,9 +11,7 @@ async function main() {
     .description("Anki CLI - Interact with Anki via the command line (using AnkiConnect)");
 
   registerSyncCommand(program);
-  registerAddCommand(program);
-  registerFetchCommand(program);
-  registerRecordingsCommand(program); // <--- Register new command
+  registerAddCommand(program);  
 
   program.on("command:*", () => {
     console.error(
