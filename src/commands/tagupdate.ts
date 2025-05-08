@@ -150,7 +150,8 @@ async function processNoteTagsAndUpdate( // Renamed for clarity if desired
         try {
             const result = await ankiConnectRequest('replaceTags', params);
             if (result === null) {
-                console.log(`${progressPrefix} ✅ noteid: ${noteId} - Tags updated, ensuring "${replaceWithTag}" is present (replacing tags starting with "${tagToReplace}::").`);
+                // --- MODIFIED LINE BELOW ---
+                console.log(`${progressPrefix} ✅ noteid: ${noteId} updated with tag ${replaceWithTag}`);
                 successCount++;
             } else {
                  console.log(`${progressPrefix} ⚠️ noteid: ${noteId} - AnkiConnect 'replaceTags' returned unexpected result: ${JSON.stringify(result)}`);
