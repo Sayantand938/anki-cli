@@ -11,7 +11,7 @@ const TARGET_UPDATE_FIELD = "Video";        // Field in Anki note to update with
 const ANKI_API_VERSION = 6;
 const ANKI_REQUEST_TIMEOUT = 15000;         // milliseconds
 const DEFAULT_DECK_NAME = "Custom Study Session"; // Deck name for fetching notes
-const DEFAULT_TARGET_COPY_DIR = "D:\\AnkiData\\NOTES\\collection.media"; // Anki's media collection
+const DEFAULT_TARGET_COPY_DIR = "D:\\AnkiData\\CGL\\collection.media"; // Anki's media collection
 const PRE_PROCESSING_DELAY_MS = 3000;       // Delay before processing starts
 const INTER_NOTE_DELAY_MS = 1000;           // Delay between processing each note
 // ---------------------
