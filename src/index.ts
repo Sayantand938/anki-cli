@@ -8,6 +8,7 @@ import { registerExportnotesCommand, ExportNotesCommandOptions } from "./command
 // Import the registration functions for the new commands
 import { registerTagupdateCommand, TagUpdateCommandOptions } from "./commands/tagupdate"; // CHANGED import
 import { registerExtraupdateCommand, ExtraUpdateCommandOptions } from "./commands/extraupdate";
+import { registerDeckstatsCommand } from "./commands/deckstats"; // Import deckstats command
 import { version } from "../package.json";
 
 async function main() {
@@ -24,6 +25,7 @@ async function main() {
   registerExportnotesCommand(program);
   registerTagupdateCommand(program);  // CHANGED registration call
   registerExtraupdateCommand(program);
+  registerDeckstatsCommand(program); // Register deckstats command
 
   program.on("command:*", (operands) => {
     console.error(
