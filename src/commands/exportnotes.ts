@@ -9,7 +9,7 @@ const ANKI_API_VERSION = 6;
 const ANKI_REQUEST_TIMEOUT = 15000;
 const DEFAULT_DECK_NAME = "Custom Study Session";
 const DEFAULT_OUTPUT_DIR = "D:\\Codes\\anki-utils"; // Requested output directory
-const DEFAULT_OUTPUT_FILENAME = "input.json"; // Default filename is now input.json
+const DEFAULT_OUTPUT_FILENAME = "notes/input.json"; // Default filename is now input.json
 // ---------------------
 
 // --- Type Definitions ---

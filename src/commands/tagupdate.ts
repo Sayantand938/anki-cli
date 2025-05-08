@@ -9,7 +9,7 @@ const ANKI_CONNECT_URL = 'http://localhost:8765';
 const ANKI_API_VERSION = 6;
 const ANKI_REQUEST_TIMEOUT = 15000;
 const DEFAULT_INPUT_DIR = "D:\\Codes\\anki-utils";
-const DEFAULT_INPUT_FILENAME = "output.json";
+const DEFAULT_INPUT_FILENAME = "notes/output.json";
 const DEFAULT_INITIAL_DELAY_MS = 3000;
 const DEFAULT_PER_REQUEST_DELAY_MS = 1000;
 // ---------------------
