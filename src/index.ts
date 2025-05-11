@@ -1,155 +1,61 @@
-// // src/index.ts
-// import { program, Command } from "commander";
-// import { registerSyncCommand } from "./commands/sync";
-// import { registerAddCommand } from "./commands/add";
-// import { registerTokengenCommand, TokengenCommandOptions } from "./commands/tokengen";
-// import { registerVideolinkCommand, VideolinkCommandOptions } from "./commands/videolink";
-// import { registerExportnotesCommand, ExportNotesCommandOptions } from "./commands/exportnotes";
-// // Import the registration functions for the new commands
-// import { registerTagupdateCommand, TagUpdateCommandOptions } from "./commands/tagupdate"; // CHANGED import
-// import { registerExtraupdateCommand, ExtraUpdateCommandOptions } from "./commands/extraupdate";
-// import { registerDeckstatsCommand } from "./commands/deckstats"; // Import deckstats command
-// import { version } from "../package.json";
-
-// async function main() {
-//   program
-//     .version(version)
-//     .name("anki-cli")
-//     .description("Anki CLI - Interact with Anki via the command line (using AnkiConnect)");
-
-//   // Register commands
-//   registerSyncCommand(program);
-//   registerAddCommand(program);
-//   registerTokengenCommand(program);
-//   registerVideolinkCommand(program);
-//   registerExportnotesCommand(program);
-//   registerTagupdateCommand(program);  // CHANGED registration call
-//   registerExtraupdateCommand(program);
-//   registerDeckstatsCommand(program); // Register deckstats command
-
-//   program.on("command:*", (operands) => {
-//     console.error(
-//       "Invalid command: %s\nSee --help for a list of available commands.",
-//       operands.join(" ")
-//     );
-//     process.exitCode = 1;
-//   });
-
-//   try {
-//     await program.parseAsync(process.argv);
-//   } catch (err) {
-//     throw err; // Re-throw to be caught by main().catch()
-//   }
-
-//   const BARE_CALL = process.argv.slice(2).length === 0;
-//   const HELP_OR_VERSION_FLAG_CALLED = process.argv.slice(2).some(arg => ['--help', '-h', '--version', '-V'].includes(arg));
-
-//   if (BARE_CALL && !HELP_OR_VERSION_FLAG_CALLED) {
-//       program.outputHelp();
-//   }
-// }
-
-// main().catch((error) => {
-//   console.error("\n❌ An unexpected error occurred:");
-//   if (error instanceof Error) {
-//     if ((error as any).message === '' && (error as any).isPromptCancelled === true) {
-//         console.log("Operation cancelled by user.");
-//         process.exitCode = 0;
-//     } else if (
-//         error.message.startsWith("AnkiConnect Error:") ||
-//         error.message.startsWith("AnkiConnect request failed:") ||
-//         error.message.startsWith("Could not connect to AnkiConnect") ||
-//         error.message.startsWith("Failed to send AnkiConnect request:") ||
-//         error.message.includes("AnkiConnect API Error")
-//     ) {
-//         console.error(error.message);
-//         process.exitCode = 1;
-//     } else {
-//         console.error("Details:", error.message);
-//         process.exitCode = 1;
-//     }
-//   } else {
-//     console.error("An unknown error object was thrown:", error);
-//     process.exitCode = 1;
-//   }
-// });
-
-// src/index.ts
-import { program, Command } from "commander";
+import { program } from 'commander';
+import { version } from '../package.json';
 import { registerSyncCommand } from "./commands/sync";
 import { registerAddCommand } from "./commands/add";
-import { registerTokengenCommand, TokengenCommandOptions } from "./commands/tokengen";
-import { registerVideolinkCommand, VideolinkCommandOptions } from "./commands/videolink";
-import { registerExportnotesCommand, ExportNotesCommandOptions } from "./commands/exportnotes";
-import { registerTagupdateCommand, TagUpdateCommandOptions } from "./commands/tagupdate";
-import { registerExtraupdateCommand, ExtraUpdateCommandOptions } from "./commands/extraupdate";
+import { registerTokengenCommand } from "./commands/tokengen";
+import { registerVideolinkCommand } from "./commands/videolink";
 import { registerDeckstatsCommand } from "./commands/deckstats";
-// Add the new import
-import { registerNoteIdSelectorCommand, NoteIdSelectorOptions } from "./commands/noteidselector"; // Or just NoteIdSelectorOptions if not used here
-import { version } from "../package.json";
+import { registerNoteIdSelectorCommand } from "./commands/noteidselector";
+import {registerExportNotesCommand} from "./commands/export_notes";
+import {registerProcessWithGeminiCommand} from "./commands/process_with_gemini";
+import { registerTagUpdateCommand } from "./commands/tag_update";
+import { registerAutomateCommand } from "./commands/automate";
+
+
 
 async function main() {
-  program
-    .version(version)
-    .name("anki-cli")
-    .description("Anki CLI - Interact with Anki via the command line (using AnkiConnect)");
+    program
+        .version(version)
+        .name("anki-cli")
+        .description('Time CLI - A simple command-line time tracker');
 
-  // Register commands
-  registerSyncCommand(program);
-  registerAddCommand(program);
-  registerTokengenCommand(program);
-  registerVideolinkCommand(program);
-  registerExportnotesCommand(program);
-  registerTagupdateCommand(program);
-  registerExtraupdateCommand(program);
-  registerDeckstatsCommand(program);
-  // Register the new command
-  registerNoteIdSelectorCommand(program);
+    // Register all commands
+    registerSyncCommand(program);
+    registerAddCommand(program);
+    registerTokengenCommand(program);
+    registerVideolinkCommand(program);
+    registerDeckstatsCommand(program);
+    registerNoteIdSelectorCommand(program);
+    registerExportNotesCommand(program);
+    registerProcessWithGeminiCommand(program);
+    registerTagUpdateCommand(program);
 
-  program.on("command:*", (operands) => {
-    console.error(
-      "Invalid command: %s\nSee --help for a list of available commands.",
-      operands.join(" ")
-    );
-    process.exitCode = 1;
-  });
 
-  try {
+    registerAutomateCommand(program);
+
+
+    // Add default behavior or help if no command is specified
+    program.on('command:*', () => {
+        console.error('Invalid command: %s\nSee --help for a list of available commands.', program.args.join(' '));
+        process.exit(1);
+    });
+
+    // Parse arguments and execute corresponding command action
     await program.parseAsync(process.argv);
-  } catch (err) {
-    throw err; // Re-throw to be caught by main().catch()
-  }
 
-  const BARE_CALL = process.argv.slice(2).length === 0;
-  const HELP_OR_VERSION_FLAG_CALLED = process.argv.slice(2).some(arg => ['--help', '-h', '--version', '-V'].includes(arg));
-
-  if (BARE_CALL && !HELP_OR_VERSION_FLAG_CALLED) {
-      program.outputHelp();
-  }
+     // If no command was matched by Commander (and arguments were provided), show error.
+     // If no arguments were provided at all, show help.
+    if (process.argv.slice(2).length > 0 && !program.args.includes(process.argv[2])) {
+         if (!program.commands.map(cmd => cmd.name()).includes(process.argv[2]) && !['--help', '-h', '--version', '-V'].includes(process.argv[2])) {
+             console.error('Invalid command: %s\nSee --help for a list of available commands.', process.argv[2]);
+             process.exit(1);
+         }
+    } else if (!process.argv.slice(2).length) {
+        program.outputHelp();
+    }
 }
 
-main().catch((error) => {
-  console.error("\n❌ An unexpected error occurred:");
-  if (error instanceof Error) {
-    if ((error as any).message === '' && (error as any).isPromptCancelled === true) {
-        console.log("Operation cancelled by user.");
-        process.exitCode = 0;
-    } else if (
-        error.message.startsWith("AnkiConnect Error:") ||
-        error.message.startsWith("AnkiConnect request failed:") ||
-        error.message.startsWith("Could not connect to AnkiConnect") ||
-        error.message.startsWith("Failed to send AnkiConnect request:") ||
-        error.message.includes("AnkiConnect API Error") ||
-        error.message.startsWith("Clipboard error:") // Handle clipboard errors
-    ) {
-        console.error(error.message);
-        process.exitCode = 1;
-    } else {
-        console.error("Details:", error.message);
-        process.exitCode = 1;
-    }
-  } else {
-    console.error("An unknown error object was thrown:", error);
-    process.exitCode = 1;
-  }
+main().catch(error => {
+    console.error("An unexpected error occurred:", error);
+    process.exit(1);
 });

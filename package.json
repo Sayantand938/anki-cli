@@ -1,7 +1,7 @@
 {
   "name": "anki-cli",
   "version": "1.0.0",
-  "description": "A command-line tool to interact with Anki via AnkiConnect",
+  "description": "A simple command-line tool",
   "main": "dist/index.js",
   "bin": {
     "anki-cli": "./bin/anki-cli"
@@ -13,9 +13,8 @@
   },
   "keywords": [
     "cli",
-    "anki",
-    "ankiconnect",
-    "flashcards",
+    "tree",
+    "structure",
     "terminal"
   ],
   "author": "Your Name <your.email@example.com>",
@@ -31,30 +30,30 @@
     "node": ">=16"
   },
   "dependencies": {
-    "axios": "^1.8.4",
+    "@google/genai": "^0.13.0",
+    "axios": "^1.9.0",
     "boxen": "^8.0.1",
     "chalk": "^5.4.1",
     "cli-table3": "^0.6.5",
     "clipboardy": "^4.0.0",
     "commander": "^13.1.0",
-    "enquirer": "^2.4.1",
     "env-paths": "^3.0.0",
-    "execa": "^9.5.2",
-    "uuid": "^11.1.0"
+    "execa": "^9.5.3",
+    "fs-extra": "^11.3.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.23.0",
+    "@types/fs-extra": "^11.0.4",
     "@types/node": "^22.13.17",
-    "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^8.29.0",
     "@typescript-eslint/parser": "^8.29.0",
     "concurrently": "^9.1.2",
     "eslint": "^9.23.0",
     "globals": "^16.0.0",
-    "nodemon": "^3.1.9",
     "prettier": "^3.5.3",
     "rimraf": "^6.0.1",
     "ts-node": "^10.9.2",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.2",
+    "typescript-eslint": "^8.29.0"
   }
 }
