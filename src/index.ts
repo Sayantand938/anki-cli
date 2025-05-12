@@ -10,6 +10,7 @@ import {registerExportNotesCommand} from "./commands/export_notes";
 import {registerProcessWithGeminiCommand} from "./commands/process_with_gemini";
 import { registerTagUpdateCommand } from "./commands/tag_update";
 import { registerAutomateCommand } from "./commands/automate";
+import { registerExtraUpdateCommand } from "./commands/extra_update";
 
 
 
@@ -29,8 +30,7 @@ async function main() {
     registerExportNotesCommand(program);
     registerProcessWithGeminiCommand(program);
     registerTagUpdateCommand(program);
-
-
+    registerExtraUpdateCommand(program);
     registerAutomateCommand(program);
 
 
