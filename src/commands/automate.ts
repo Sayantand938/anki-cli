@@ -4,18 +4,15 @@ import { execa } from 'execa';
 export function registerAutomateCommand(program: Command) {
     program
         .command('automate')
-        .description('Runs export_notes → process_with_gemini → [tag_update or extra_update] in sequence')
-        // Changed the default value from 'tagging' to 'tag'
-        .option('--mode <type>', 'Specify guidelines mode (e.g. tag, gk, eng)', 'tag') // Default is now 'tag'
+        .description('Runs export_notes → process_with_gemini → [tag_update or extra_update or tag_check.ts] in sequence') // Updated description
+        .option('--mode <type>', 'Specify guidelines mode (e.g. tag, gk, eng, tag-check)', 'tag')
         .action(async (options) => {
             const guidelineMap: Record<string, string> = {
-                // Keep 'tagging' as a valid key if the instruction file is still named tagging_instructions.md
-                // Or, if the instruction file name should also change, update this map accordingly.
-                // Assuming the instruction file name remains 'tagging_instructions.md' for 'tag' mode.
-                tag: 'tagging_instructions.md', // Added 'tag' mode mapping
-                tagging: 'tagging_instructions.md', // Kept 'tagging' for backward compatibility or clarity if needed
+                tag: 'tagging_instructions.md',
+                tagging: 'tagging_instructions.md',
                 gk: 'gk_extra_instructions.md',
-                eng: 'eng_explanation_instructions.md'
+                eng: 'eng_explanation_instructions.md',
+                'tag-check': 'check_tags.md'
             };
 
             const guidelineFile = guidelineMap[options.mode];
@@ -26,26 +23,37 @@ export function registerAutomateCommand(program: Command) {
                 process.exit(1);
             }
 
-            // Determine which final update script to run
-            // Check if the selected mode is 'tag' or 'tagging' to use tag_update
-            const isTaggingMode = options.mode === 'tag' || options.mode === 'tagging';
-            const finalStepCmd = isTaggingMode ? 'tag_update' : 'extra_update';
+            // Determine which final update script to run based on the mode
+            let finalStepCmd: string;
+            if (options.mode === 'tag-check') {
+                finalStepCmd = 'tag_check'; // Use tag_check.ts specifically for tag-check mode
+            } else if (options.mode === 'tag' || options.mode === 'tagging') {
+                finalStepCmd = 'tag_update'; // Use tag_update for tag and tagging modes
+            } else {
+                finalStepCmd = 'extra_update'; // Use extra_update for other modes (gk, eng)
+            }
+
+
+            // Determine the mode to pass to the export_notes command
+            // For 'tag-check' mode, export_notes should use the 'tag' mode
+            const exportNotesMode = options.mode === 'tag-check' ? 'tag' : options.mode;
 
             const steps = [
                 {
                     cmd: 'anki-cli', // Assuming 'anki-cli' is your executable name
-                    // Pass the --mode option to the export_notes command
-                    args: ['export_notes', '-m', options.mode],
-                    label: 'export_notes'
+                    // Pass the determined exportNotesMode to the export_notes command
+                    args: ['export_notes', '-m', exportNotesMode],
+                    label: `export_notes (mode: ${exportNotesMode})`
                 },
                 {
                     cmd: 'anki-cli', // Assuming 'anki-cli' is your executable name
+                    // Use the guidelineFile determined based on the original options.mode
                     args: ['process_with_gemini', '--guidelines', guidelineFile],
-                    label: `process_with_gemini (${options.mode})`
+                    label: `process_with_gemini (guidelines: ${guidelineFile})`
                 },
                 {
                     cmd: 'anki-cli', // Assuming 'anki-cli' is your executable name
-                    args: [finalStepCmd],
+                    args: [finalStepCmd], // Use the determined finalStepCmd
                     label: finalStepCmd
                 }
             ];

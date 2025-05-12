@@ -11,8 +11,9 @@ import {registerProcessWithGeminiCommand} from "./commands/process_with_gemini";
 import { registerTagUpdateCommand } from "./commands/tag_update";
 import { registerAutomateCommand } from "./commands/automate";
 import { registerExtraUpdateCommand } from "./commands/extra_update";
+import { registerTagCheckCommand } from "./commands/tag_check";
 
-
+registerTagCheckCommand
 
 async function main() {
     program
@@ -32,6 +33,7 @@ async function main() {
     registerTagUpdateCommand(program);
     registerExtraUpdateCommand(program);
     registerAutomateCommand(program);
+    registerTagCheckCommand(program);
 
 
     // Add default behavior or help if no command is specified
