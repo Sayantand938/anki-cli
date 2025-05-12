@@ -34,7 +34,8 @@ export function registerAutomateCommand(program: Command) {
             const steps = [
                 {
                     cmd: 'anki-cli', // Assuming 'anki-cli' is your executable name
-                    args: ['export_notes'],
+                    // Pass the --mode option to the export_notes command
+                    args: ['export_notes', '-m', options.mode],
                     label: 'export_notes'
                 },
                 {

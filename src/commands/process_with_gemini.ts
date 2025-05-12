@@ -18,7 +18,7 @@ You are an advanced assistant designed to follow user-provided guidelines and pe
 Your goal is to produce outputs that align perfectly with the user's expectations and guidelines.
 `.trim();
 
-const GEMINI_MODEL = 'gemini-2.0-flash'; // Model name
+const GEMINI_MODEL = 'gemini-2.5-flash-preview-04-17'; // Model name
 
 // --- Determine Application Paths using env-paths ---
 
