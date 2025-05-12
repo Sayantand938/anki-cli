@@ -8,11 +8,11 @@ export function registerAutomateCommand(program: Command) {
         .option('--mode <type>', 'Specify guidelines mode (e.g. tag, gk, eng, tag-check)', 'tag')
         .action(async (options) => {
             const guidelineMap: Record<string, string> = {
-                tag: 'tagging_instructions.md',
-                tagging: 'tagging_instructions.md',
-                gk: 'gk_extra_instructions.md',
-                eng: 'eng_explanation_instructions.md',
-                'tag-check': 'check_tags.md'
+                tag: 'Question Tagging Guidelines.md',
+                tagging: 'Question Tagging Guidelines.md',
+                gk: 'GK Extra field Guidelines.md',
+                eng: 'ENG Extra field Guidelines.md',
+                'tag-check': 'Tag Checking Guidelines.md'
             };
 
             const guidelineFile = guidelineMap[options.mode];
