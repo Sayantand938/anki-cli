@@ -226,7 +226,7 @@ export async function noteidselectorAction(options: NoteIdSelectorOptions): Prom
 // --- Function to register the command with Commander ---
 export function registerNoteIdSelectorCommand(program: Command) {
   program
-    .command('noteidselector')
+    .command('noteid_selector')
     .description('Fetches notes by TokenNo (range or start+count) and copies their Note IDs to clipboard.')
     .requiredOption('-s, --start <tokenNo>', 'Starting TokenNo for the range/selection')
     .option('-e, --end <tokenNo>', 'Ending TokenNo for the range (cannot be used with --count)')

@@ -5,7 +5,7 @@ import { registerAddCommand } from "./commands/add";
 import { registerTokengenCommand } from "./commands/tokengen";
 import { registerVideolinkCommand } from "./commands/videolink";
 import { registerDeckstatsCommand } from "./commands/deckstats";
-import { registerNoteIdSelectorCommand } from "./commands/noteidselector";
+import { registerNoteIdSelectorCommand } from "./commands/noteid_selector";
 import {registerExportNotesCommand} from "./commands/export_notes";
 import {registerProcessWithGeminiCommand} from "./commands/process_with_gemini";
 import { registerTagUpdateCommand } from "./commands/tag_update";
@@ -13,6 +13,7 @@ import { registerAutomateCommand } from "./commands/automate";
 import { registerExtraUpdateCommand } from "./commands/extra_update";
 import { registerTagCheckCommand } from "./commands/tag_check";
 import { registerClearFieldCommand } from "./commands/clear_field";
+import { registerInstructionsUpdateCommand } from "./commands/instructions_update";
 
 async function main() {
     program
@@ -34,6 +35,7 @@ async function main() {
     registerAutomateCommand(program);
     registerTagCheckCommand(program);
     registerClearFieldCommand(program);
+    registerInstructionsUpdateCommand(program);
 
     // Add default behavior or help if no command is specified
     program.on('command:*', () => {

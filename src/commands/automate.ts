@@ -5,14 +5,14 @@ export function registerAutomateCommand(program: Command) {
     program
         .command('automate')
         .description('Runs export_notes → process_with_gemini → [tag_update or extra_update or tag_check.ts] in sequence') // Updated description
-        .option('--mode <type>', 'Specify guidelines mode (e.g. tag, gk, eng, tag-check)', 'tag')
+        .option('--mode <type>', 'Specify guidelines mode (e.g. tag, gk, eng, tag_check)', 'tag')
         .action(async (options) => {
             const guidelineMap: Record<string, string> = {
                 tag: 'Question Tagging Guidelines.md',
                 tagging: 'Question Tagging Guidelines.md',
                 gk: 'GK Extra field Guidelines.md',
                 eng: 'ENG Extra field Guidelines.md',
-                'tag-check': 'Tag Checking Guidelines.md'
+                'tag_check': 'Tag Checking Guidelines.md'
             };
 
             const guidelineFile = guidelineMap[options.mode];
@@ -25,8 +25,8 @@ export function registerAutomateCommand(program: Command) {
 
             // Determine which final update script to run based on the mode
             let finalStepCmd: string;
-            if (options.mode === 'tag-check') {
-                finalStepCmd = 'tag_check'; // Use tag_check.ts specifically for tag-check mode
+            if (options.mode === 'tag_check') {
+                finalStepCmd = 'tag_check'; // Use tag_check specifically for tag_check mode
             } else if (options.mode === 'tag' || options.mode === 'tagging') {
                 finalStepCmd = 'tag_update'; // Use tag_update for tag and tagging modes
             } else {
@@ -35,8 +35,8 @@ export function registerAutomateCommand(program: Command) {
 
 
             // Determine the mode to pass to the export_notes command
-            // For 'tag-check' mode, export_notes should use the 'tag' mode
-            const exportNotesMode = options.mode === 'tag-check' ? 'tag' : options.mode;
+            // For 'tag_check' mode, export_notes should use the 'tag' mode
+            const exportNotesMode = options.mode === 'tag_check' ? 'tag' : options.mode;
 
             const steps = [
                 {
