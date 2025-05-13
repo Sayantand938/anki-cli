@@ -1,32 +1,28 @@
-// src/commands/videolink.ts
-import fs from "fs/promises"; // Use promise-based fs
+import fs from "fs/promises";
 import path from "path";
-import axios, { AxiosError } from 'axios'; // Use axios for HTTP requests
+import axios, { AxiosError } from 'axios';
 import { Command } from 'commander';
 
-// --- Configuration (can be adjusted or made into options) ---
+// Configuration constants
 const ANKI_CONNECT_URL = "http://localhost:8765";
-const TOKEN_FIELD_NAME = "TokenNo";         // Field in Anki note containing the token
-const TARGET_UPDATE_FIELD = "Video";        // Field in Anki note to update with [sound:...]
+const TOKEN_FIELD_NAME = "TokenNo";
+const TARGET_UPDATE_FIELD = "Video";
 const ANKI_API_VERSION = 6;
-const ANKI_REQUEST_TIMEOUT = 15000;         // milliseconds
-const DEFAULT_DECK_NAME = "Custom Study Session"; // Deck name for fetching notes
-const DEFAULT_TARGET_COPY_DIR = "D:\\AnkiData\\CGL\\collection.media"; // Anki's media collection
-const PRE_PROCESSING_DELAY_MS = 3000;       // Delay before processing starts
-const INTER_NOTE_DELAY_MS = 1000;           // Delay between processing each note
-// ---------------------
+const ANKI_REQUEST_TIMEOUT = 15000;
+const DEFAULT_DECK_NAME = "Custom Study Session";
+const DEFAULT_TARGET_COPY_DIR = "D:\\AnkiData\\CGL\\collection.media"; // Default Anki media collection path
+const PRE_PROCESSING_DELAY_MS = 3000;
+const INTER_NOTE_DELAY_MS = 1000;
 
-// --- Constants for Output ---
+// Output constants
 const SUCCESS_MARK = "[✓]";
 const FAILURE_MARK = "[✗]";
-const INDENT = "    ";
-// --------------------------
+const INDENT = "    ";
 
-// --- Type Definitions ---
+// Type Definitions
 interface AnkiNoteInfoFetched {
     noteId: number;
     fields: Record<string, { value: string, order: number }>;
-    // Add other fields if notesInfo returns more that you use
 }
 
 interface ExtractedNoteInfo {
@@ -46,21 +42,20 @@ interface ProcessItem {
     noteId: number;
     token: string;
     newFilename: string;
-    newPath: string;
-    targetCopyPath: string;
-    soundTag: string;
+    newPathInSource: string; // Path after renaming in source
+    targetCopyPath: string; // Final path in Anki media
+    soundTag: string; // Anki sound tag
 }
 
 export interface VideolinkCommandOptions {
-    path: string; // Source folder path for MKV files (required)
+    path: string; // Source folder path for MKV files
     ankiMediaDir?: string; // Optional override for Anki media directory
     deck?: string; // Optional override for Anki deck name
     tokenField?: string; // Optional override for the token field name
     videoField?: string; // Optional override for the target video field name
 }
 
-
-// --- Helper: AnkiConnect Request (using axios) ---
+// Helper: Send request to AnkiConnect
 async function ankiConnectRequest(action: string, params: Record<string, any> = {}): Promise<any> {
     try {
         const response = await axios.post(ANKI_CONNECT_URL, {
@@ -70,7 +65,7 @@ async function ankiConnectRequest(action: string, params: Record<string, any> = 
         }, { timeout: ANKI_REQUEST_TIMEOUT });
 
         if (response.data.error) {
-            // Specific error handling for deck/field not found
+            // Enhance error messages for specific AnkiConnect errors
             if (action === "notesInfo" && response.data.error.includes("deck was not found")) {
                 const deckName = params?.query?.match(/deck:"([^"]+)"/)?.[1] || 'provided name';
                 throw new Error(`AnkiConnect Error: Deck "${deckName}" not found.`);
@@ -96,44 +91,35 @@ async function ankiConnectRequest(action: string, params: Record<string, any> = 
             }
             if (axiosError.response) {
                 throw new Error(`AnkiConnect request failed: ${axiosError.message} (Status: ${axiosError.response.status}, Data: ${JSON.stringify(axiosError.response.data)})`);
-            } else if (axiosError.request) { // Network error, timeout
+            } else if (axiosError.request) {
                 throw new Error(`AnkiConnect request error: ${axiosError.message}. Check network or AnkiConnect status.`);
             }
         }
-        // Re-throw if it's not an Axios error or already a custom error
-        throw error;
+        throw error; // Re-throw if not an Axios error
     }
 }
 
-
-// --- Helper: Fetch Note Info (ID and Token) from Anki Deck ---
+// Helper: Fetch required info from Anki notes in a deck
 async function fetchNoteInfoForDeck(deckName: string, tokenFieldName: string): Promise<ExtractedNoteInfo[]> {
-    // console.log(`[Anki] Fetching notes from deck: "${deckName}"...`); // Suppressed for CLI
     let notesInfo: AnkiNoteInfoFetched[];
     try {
         notesInfo = await ankiConnectRequest("notesInfo", { query: `deck:"${deckName}"` });
     } catch (err: any) {
-        // Error is already specific from ankiConnectRequest
         throw new Error(`[Anki] Failed to fetch notes info: ${err.message}`);
     }
 
     if (!notesInfo || notesInfo.length === 0) {
-        // console.log(`[Anki] No notes found in deck "${deckName}".`); // Suppressed
         return [];
     }
 
     const extractedNotes: ExtractedNoteInfo[] = [];
     let skippedCount = 0;
 
-    notesInfo.forEach((note, index) => {
+    notesInfo.forEach(note => {
         const tokenValue = note?.fields?.[tokenFieldName]?.value;
         const noteId = note?.noteId;
 
-        if (!noteId) {
-            skippedCount++;
-            return;
-        }
-        if (!tokenValue) {
+        if (!noteId || !tokenValue) {
             skippedCount++;
             return;
         }
@@ -143,6 +129,7 @@ async function fetchNoteInfoForDeck(deckName: string, tokenFieldName: string): P
             skippedCount++;
             return;
         }
+
         extractedNotes.push({ noteId: noteId, tokenNo: sanitizedToken });
     });
 
@@ -152,8 +139,7 @@ async function fetchNoteInfoForDeck(deckName: string, tokenFieldName: string): P
     return extractedNotes;
 }
 
-
-// --- Helper: Get and Sort MKV Files by Creation Time ---
+// Helper: Get and sort MKV files by creation time
 async function getSortedMkvFiles(folderPath: string): Promise<MkvFile[]> {
     let filesWithStats: { path: string; name: string; timeMs: number }[] = [];
     try {
@@ -177,14 +163,13 @@ async function getSortedMkvFiles(folderPath: string): Promise<MkvFile[]> {
     return filesWithStats.map(f => ({ path: f.path, name: f.name }));
 }
 
-// --- Helper: Delay Function ---
+// Helper: Simple delay
 function delay(ms: number): Promise<void> {
     if (ms <= 0) return Promise.resolve();
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-
-// --- Core Processing Logic ---
+// Core Processing Logic: Matches files and notes, renames, copies, and updates Anki
 async function processFilesAndNotes(
     sourceFolderPath: string,
     deckNameToUse: string,
@@ -200,9 +185,7 @@ async function processFilesAndNotes(
     let successAnkiUpdateCount = 0, failAnkiUpdateCount = 0;
     let overallSuccessCount = 0;
 
-    // No try-catch here; let errors propagate to the main CLI handler in index.ts
-
-    // --- 1. Preparation ---
+    // 1. Preparation and Validation
     try {
         await fs.access(targetCopyDir, fs.constants.W_OK);
         const stats = await fs.stat(targetCopyDir);
@@ -217,7 +200,7 @@ async function processFilesAndNotes(
     noteCount = fetchedNotes.length;
     if (noteCount === 0) {
         console.error("[INFO] No valid notes fetched from Anki. Nothing to process.");
-        return 0; // Not an error state, but nothing to do.
+        return 0;
     }
 
     const sortedMkvFiles = await getSortedMkvFiles(sourceFolderPath);
@@ -241,8 +224,8 @@ async function processFilesAndNotes(
         const fileInfo = sortedMkvFiles[i];
         const noteInfo = fetchedNotes[i];
         const token = noteInfo.tokenNo;
-        const newFilename = `${token}.mkv`; // Assumes token is filename-safe after sanitization
-        const newPathInSource = path.join(sourceFolderPath, newFilename); // New path in the original source folder
+        const newFilename = `${token}.mkv`;
+        const newPathInSource = path.join(sourceFolderPath, newFilename);
         itemsToProcess.push({
             index: i,
             originalPath: fileInfo.path,
@@ -250,8 +233,8 @@ async function processFilesAndNotes(
             noteId: noteInfo.noteId,
             token: token,
             newFilename: newFilename,
-            newPath: newPathInSource, // Path for renaming in source
-            targetCopyPath: path.join(targetCopyDir, newFilename), // Final path in Anki media
+            newPathInSource: newPathInSource,
+            targetCopyPath: path.join(targetCopyDir, newFilename),
             soundTag: `[sound:${newFilename}]`,
         });
     }
@@ -260,92 +243,74 @@ async function processFilesAndNotes(
         await delay(PRE_PROCESSING_DELAY_MS);
     }
 
-    // --- 2. Processing Loop ---
+    // 2. Processing Loop
     console.log(`\n--- Processing ${processCount} Matched Items ---`);
 
     for (let i = 0; i < itemsToProcess.length; i++) {
         const item = itemsToProcess[i];
         console.log(`\n[${i + 1}/${processCount}] NoteID: ${item.noteId}, Token: ${item.token}`);
 
-        let currentPathForCopy = item.originalPath;
-        let stepFailedInLoop = false;
+        let pathForCopy = item.originalPath; // Start with original path for copy
+        let itemFullyProcessed = true;
 
-        // Step 2a: Rename (in source folder)
-        if (item.originalPath === item.newPath) {
+        // Step 2a: Rename (in source folder) or check if already renamed
+        if (item.originalPath === item.newPathInSource) {
             console.log(`${INDENT}${SUCCESS_MARK} Renaming skipped (file "${item.originalFilename}" already matches token name)`);
             successRenameCount++;
             skippedRenameCount++;
         } else {
             try {
-                // Check if target renamed file already exists in source
-                await fs.access(item.newPath); // This will throw if it doesn't exist
-                console.log(`${INDENT}${FAILURE_MARK} Renaming "${item.originalFilename}" to "${item.newFilename}" in source`);
-                console.log(`${INDENT}${INDENT}Error: Target file "${item.newFilename}" already exists in source folder. Skipping rename.`);
-                failRenameCount++;
-                stepFailedInLoop = true; // Potentially problematic, as copy might use old name
-                                         // Or, decide to use the existing item.newPath for copy if it exists.
-                                         // For now, let's assume if rename fails due to existing, we might still want to copy that existing one.
-                                         // Let's refine: if item.newPath exists, we assume it's the one we want and set currentPathForCopy to it.
-                try {
-                    // Verify we can read the existing target file before deciding to use it
-                    await fs.access(item.newPath, fs.constants.R_OK);
-                    currentPathForCopy = item.newPath; // Use the existing correctly named file
-                    console.log(`${INDENT}[INFO] Using existing file "${item.newFilename}" for copy operation.`);
-                    stepFailedInLoop = false; // No longer a failure for the overall process of this item
-                    successRenameCount++; // Count as success because the desired file exists
-                    skippedRenameCount++; // Skipped actual rename op
-                } catch (accessErr){
-                    console.log(`${INDENT}${INDENT}Error: Cannot access existing target file "${item.newFilename}". This item will likely fail.`);
-                    stepFailedInLoop = true;
-                }
-
-            } catch (accessError: any) { // This block runs if item.newPath does NOT exist (ENOENT)
+                // Check if target name already exists in source. If so, use it.
+                await fs.access(item.newPathInSource, fs.constants.R_OK);
+                console.log(`${INDENT}${SUCCESS_MARK} Renaming "${item.originalFilename}" to "${item.newFilename}" in source`);
+                console.log(`${INDENT}${INDENT}[INFO] Target file "${item.newFilename}" already exists in source. Using existing file for copy.`);
+                pathForCopy = item.newPathInSource; // Use the existing file for copy
+                successRenameCount++; // Count as success as the desired state exists
+                skippedRenameCount++;
+            } catch (accessError: any) {
                 if (accessError.code === 'ENOENT') {
+                    // Target name does not exist, proceed with rename
                     try {
-                        await fs.rename(item.originalPath, item.newPath);
+                        await fs.rename(item.originalPath, item.newPathInSource);
                         console.log(`${INDENT}${SUCCESS_MARK} Renaming "${item.originalFilename}" to "${item.newFilename}" in source`);
                         successRenameCount++;
-                        currentPathForCopy = item.newPath;
+                        pathForCopy = item.newPathInSource; // Update path for copy after successful rename
                     } catch (renameError: any) {
                         console.log(`${INDENT}${FAILURE_MARK} Renaming "${item.originalFilename}" to "${item.newFilename}" in source`);
                         console.log(`${INDENT}${INDENT}Error: ${renameError.message}`);
                         failRenameCount++;
-                        stepFailedInLoop = true;
+                        itemFullyProcessed = false;
                     }
-                } else { // Other access errors
+                } else {
+                    // Other access errors
                     console.log(`${INDENT}${FAILURE_MARK} Checking for target rename path "${item.newFilename}"`);
                     console.log(`${INDENT}${INDENT}Error: ${accessError.message}`);
                     failRenameCount++;
-                    stepFailedInLoop = true;
+                    itemFullyProcessed = false;
                 }
             }
         }
 
-        if (stepFailedInLoop) {
+        if (!itemFullyProcessed) {
             if (i < itemsToProcess.length - 1 && INTER_NOTE_DELAY_MS > 0) await delay(INTER_NOTE_DELAY_MS);
-            continue; // Skip to next item
+            continue; // Skip copy and update for this item if rename/check failed
         }
 
         // Step 2b: Copy (from source to Anki media)
         try {
-            // Check if file already exists in Anki media. If so, overwrite or skip?
-            // For simplicity, this version will overwrite. Add a check if skipping is preferred.
-            // await fs.access(item.targetCopyPath); // If this doesn't throw, file exists.
-            // console.log(`${INDENT}[INFO] File "${item.newFilename}" already exists in Anki media. Overwriting.`);
-
-            await fs.copyFile(currentPathForCopy, item.targetCopyPath);
-            console.log(`${INDENT}${SUCCESS_MARK} Copying "${path.basename(currentPathForCopy)}" to "${targetCopyDir}"`);
+            await fs.copyFile(pathForCopy, item.targetCopyPath);
+            console.log(`${INDENT}${SUCCESS_MARK} Copying "${path.basename(pathForCopy)}" to "${targetCopyDir}"`);
             successCopyCount++;
         } catch (copyError: any) {
-            console.log(`${INDENT}${FAILURE_MARK} Copying "${path.basename(currentPathForCopy)}" to "${targetCopyDir}"`);
+            console.log(`${INDENT}${FAILURE_MARK} Copying "${path.basename(pathForCopy)}" to "${targetCopyDir}"`);
             console.log(`${INDENT}${INDENT}Error: ${copyError.message}`);
             failCopyCount++;
-            stepFailedInLoop = true;
+            itemFullyProcessed = false;
         }
 
-        if (stepFailedInLoop) {
+        if (!itemFullyProcessed) {
             if (i < itemsToProcess.length - 1 && INTER_NOTE_DELAY_MS > 0) await delay(INTER_NOTE_DELAY_MS);
-            continue; // Skip to next item
+            continue; // Skip update if copy failed
         }
 
         // Step 2c: Update Anki Note
@@ -354,11 +319,12 @@ async function processFilesAndNotes(
             await ankiConnectRequest("updateNoteFields", payload);
             console.log(`${INDENT}${SUCCESS_MARK} Updating Anki field "${targetUpdateFieldAnki}" with "${item.soundTag}"`);
             successAnkiUpdateCount++;
-            overallSuccessCount++; // Only count full success here
+            overallSuccessCount++; // Count as overall success only if all steps completed
         } catch (updateError: any) {
             console.log(`${INDENT}${FAILURE_MARK} Updating Anki field "${targetUpdateFieldAnki}" with "${item.soundTag}"`);
             console.log(`${INDENT}${INDENT}Error: ${updateError.message}`);
             failAnkiUpdateCount++;
+            itemFullyProcessed = false; // Mark as not fully processed if Anki update fails
         }
 
         if (i < itemsToProcess.length - 1 && INTER_NOTE_DELAY_MS > 0) {
@@ -366,47 +332,21 @@ async function processFilesAndNotes(
         }
     } // End of loop
 
-    console.log("\n--- Processing Complete ---");
-    console.log(`Source MKV Folder:          "${sourceFolderPath}"`);
-    console.log(`Target Anki Deck:           "${deckNameToUse}"`);
-    console.log(`Anki Media Directory:       "${targetCopyDir}"`);
-    console.log(`Anki Token Field:           "${tokenFieldName}"`);
-    console.log(`Anki Video Field (Update):  "${targetUpdateFieldAnki}"`);
-    console.log("---------------------------");
-    console.log(`Total MKV files found:        ${fileCount}`);
-    console.log(`Total valid Anki notes found: ${noteCount}`);
-    console.log(`File/Note pairs processed:    ${processCount}`);
-    console.log("--- Operation Results ---");
-    console.log("Rename (in source folder):");
-    console.log(`  Success (Renamed):        ${successRenameCount - skippedRenameCount}`);
-    console.log(`  Success (Skipped/As Is):  ${skippedRenameCount}`);
-    console.log(`  Failed:                   ${failRenameCount}`);
-    console.log("Copy (to Anki media):");
-    console.log(`  Success:                  ${successCopyCount}`);
-    console.log(`  Failed:                   ${failCopyCount}`);
-    console.log("Anki Update:");
-    console.log(`  Success:                  ${successAnkiUpdateCount}`);
-    console.log(`  Failed:                   ${failAnkiUpdateCount}`);
-    console.log("---------------------------");
-    console.log(`Overall items completed successfully (all steps): ${overallSuccessCount} / ${processCount}`);
-
     if (failRenameCount > 0 || failCopyCount > 0 || failAnkiUpdateCount > 0) {
         console.error("\nErrors occurred during processing. Please review the logs above.");
-        return 1; // Indicate failure
+        return 1;
     } else if (processCount > 0 && overallSuccessCount === processCount) {
-         console.log("\nAll items processed successfully!");
-         return 0; // Indicate success
+        console.log("\nAll items processed successfully!");
+        return 0;
     } else if (processCount > 0) {
-         console.log("\nProcessing finished, but some items may not have completed all steps (check logs).");
-         return 0; // Still success, but with caveats
+        console.log("\nProcessing finished, but some items may not have completed all steps (check logs).");
+        return 0; // Partial success counts as 0 exit code for CLI tools usually
     }
-    return 0; // Default success if nothing was processed but no errors occurred
+    return 0; // No items processed, no errors
 }
 
-
-// --- CLI Command Action ---
+// CLI Command Action: Handles command line arguments and orchestrates the process
 export async function videolinkAction(options: VideolinkCommandOptions): Promise<void> {
-    // Resolve and validate the source MKV folder path
     let resolvedSourcePath = '';
     try {
         resolvedSourcePath = path.resolve(options.path.trim());
@@ -428,12 +368,11 @@ export async function videolinkAction(options: VideolinkCommandOptions): Promise
 
     console.log(`Starting video linking process...`);
     console.log(`Source MKVs: "${resolvedSourcePath}"`);
-    console.log(`Anki Deck: "${deckNameToUse}"`);
+    console.log(`Target Anki Deck: "${deckNameToUse}"`);
     console.log(`Anki Media Dir: "${targetCopyDir}"`);
     console.log(`Token Field: "${tokenFieldName}"`);
     console.log(`Video Field: "${targetUpdateFieldAnki}"`);
 
-    // Errors from processFilesAndNotes will propagate to the main CLI error handler
     const exitCode = await processFilesAndNotes(
         resolvedSourcePath,
         deckNameToUse,
@@ -442,30 +381,29 @@ export async function videolinkAction(options: VideolinkCommandOptions): Promise
         targetUpdateFieldAnki
     );
 
-    // The main CLI handler in index.ts will set process.exitCode based on thrown errors.
-    // If processFilesAndNotes returns 1, we should ensure an error is thrown or exitCode is set.
     if (exitCode !== 0) {
-        // This message might be redundant if processFilesAndNotes already logged errors.
-        // Consider if a generic "process failed" error needs to be thrown here.
-        // For now, the detailed logs from processFilesAndNotes should suffice.
-        // Setting process.exitCode directly is an option, but throwing helps centralize error handling.
         throw new Error("Video linking process completed with errors. Check logs for details.");
     } else {
         console.log("Video linking process finished.");
     }
 }
 
-// --- Function to register the command with Commander ---
+// Function to register the command with Commander
 export function registerVideolinkCommand(program: Command) {
-  program
-    .command('videolink')
-    .description('Rename/copy MKV files based on Anki note tokens and update a video field in Anki.')
-    .requiredOption('-p, --path <folderPath>', 'Full path to the folder containing MKV files')
-    .option('--deck <name>', `Target Anki deck name (default: "${DEFAULT_DECK_NAME}")`)
-    .option('--anki-media-dir <mediaPath>', `Path to Anki's collection.media directory (default: "${DEFAULT_TARGET_COPY_DIR}")`)
-    .option('--token-field <fieldName>', `Anki field name containing the token (default: "${TOKEN_FIELD_NAME}")`)
-    .option('--video-field <fieldName>', `Anki field name to update with video link (default: "${TARGET_UPDATE_FIELD}")`)
-    .action(async (options: VideolinkCommandOptions) => {
-        await videolinkAction(options);
-    });
+    program
+        .command('video_link')
+        .description('Rename/copy MKV files based on Anki note tokens and update a video field in Anki.')
+        .requiredOption('-p, --path <folderPath>', 'Full path to the folder containing MKV files')
+        .option('--deck <name>', `Target Anki deck name (default: "${DEFAULT_DECK_NAME}")`)
+        .option('--anki-media-dir <mediaPath>', `Path to Anki's collection.media directory (default: "${DEFAULT_TARGET_COPY_DIR}")`)
+        .option('--token-field <fieldName>', `Anki field name containing the token (default: "${TOKEN_FIELD_NAME}")`)
+        .option('--video-field <fieldName>', `Anki field name to update with video link (default: "${TARGET_UPDATE_FIELD}")`)
+        .action(async (options: VideolinkCommandOptions) => {
+            try {
+                await videolinkAction(options);
+            } catch (error: any) {
+                console.error(`\nError: ${error.message}`);
+                process.exit(1); // Exit with a non-zero code on error
+            }
+        });
 }

@@ -114,9 +114,9 @@ function buildGeminiPrompt(systemPrompt: string, instructionText: string, inputJ
 ${systemPrompt}
 </system-prompt>
 
-<instruction>
+<instructions>
 ${instructionText.trim()}
-</instruction>
+</instructions>
 
 <input-file>
 ${inputJson}

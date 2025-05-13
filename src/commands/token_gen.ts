@@ -184,7 +184,7 @@ export async function tokengenAction(options: TokengenCommandOptions): Promise<v
 // Function to register the command with Commander
 export function registerTokengenCommand(program: Command) {
   program
-    .command('tokengen')
+    .command('token_gen')
     .description('Generates and updates TokenNo for notes in a specified Anki deck.')
     .option('-d, --deck <name>', 'Specify the target Anki deck name', DEFAULT_TARGET_DECK_NAME)
     .action(async (options: TokengenCommandOptions) => {
