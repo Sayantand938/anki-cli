@@ -150,7 +150,7 @@ Here's the **flowchart (step-by-step process)**:
 12. MATH::Time-And-Work
 13. MATH::Pipe-And-Cistern
 14. MATH::Time-Speed-Distance
-15. MATH::Linear-Circular-Race
+15. MATH::Linear-And-Circular-Race
 16. MATH::Boat-And-Stream
 17. MATH::Percentage
 18. MATH::Profit-And-Loss
@@ -160,42 +160,41 @@ Here's the **flowchart (step-by-step process)**:
 22. MATH::Installment
 23. MATH::Average
 24. MATH::Data-Interpretation
-25. MATH::Mean-Median-Mode
+25. MATH::Statistics
 26. MATH::Coordinate-Geometry
 27. MATH::Probability
 28. MATH::Age
+29. MATH::Progressions
 29. MATH::Undefined
 
 ### GI Tags (General Intelligence / Reasoning)
 
-1.  GI::Analogy
-2.  GI::Odd-One-Out
-3.  GI::Coding-Decoding
-4.  GI::Series
-5.  GI::Missing-Numbers
-6.  GI::Syllogism
-7.  GI::Statements-And-Conclusions
-8.  GI::Data-Sufficiency
-9.  GI::Blood-Relation
-10. GI::Venn-Diagram
-11. GI::Cube-And-Dice
-12. GI::Sitting-Arrangements
-13. GI::Direction
-14. GI::Arithmetic-Reasoning
-15. GI::Mathematical-Operations
-16. GI::Word-Arrangements
-17. GI::Calendar
-18. GI::Counting-Of-Figures
-19. GI::Paper-Cut-Fold
-20. GI::Embedded-Figures
-21. GI::Completion-Of-Figures
-22. GI::Mirror-Water-Image
-23. GI::Order-Ranking
-24. GI::Inequality
-25. GI::Word-Formation
-26. GI::Puzzle
-27. GI::Age
-28. GI::Undefined
+1. GI::Analogy  
+2. GI::Odd-One-Out  
+3. GI::Coding-Decoding  
+4. GI::Series  
+5. GI::Missing-Numbers  
+6. GI::Syllogism  
+7. GI::Data-Sufficiency  
+8. GI::Blood-Relation  
+9. GI::Venn-Diagram  
+10. GI::Cube-And-Dice  
+11. GI::Sitting-Arrangement  
+12. GI::Direction  
+13. GI::Mathematical-Operations  
+14. GI::Word-Arrangements  
+15. GI::Calendar  
+16. GI::Counting-Figures  
+17. GI::Paper-Cut-Fold  
+18. GI::Embedded-Figures  
+19. GI::Completion-Of-Figures  
+20. GI::Mirror-And-Water-Image  
+21. GI::Order-And-Ranking  
+22. GI::Inequality  
+23. GI::Word-Formation  
+24. GI::Puzzle  
+25. GI::Age  
+26. GI::Undefined
 
 ### GK Tags (General Knowledge)
 

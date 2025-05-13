@@ -12,8 +12,7 @@ import { registerTagUpdateCommand } from "./commands/tag_update";
 import { registerAutomateCommand } from "./commands/automate";
 import { registerExtraUpdateCommand } from "./commands/extra_update";
 import { registerTagCheckCommand } from "./commands/tag_check";
-
-registerTagCheckCommand
+import { registerClearFieldCommand } from "./commands/clear_field";
 
 async function main() {
     program
@@ -34,7 +33,7 @@ async function main() {
     registerExtraUpdateCommand(program);
     registerAutomateCommand(program);
     registerTagCheckCommand(program);
-
+    registerClearFieldCommand(program);
 
     // Add default behavior or help if no command is specified
     program.on('command:*', () => {
