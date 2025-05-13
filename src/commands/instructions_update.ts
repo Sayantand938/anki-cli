@@ -30,7 +30,7 @@ export function registerInstructionsUpdateCommand(program: Command) {
         .action(async () => {
             console.log('Starting instructions update process...');
 
-            const sourcePath = 'Instructions'; // Relative to workspace root
+            const sourcePath = 'D:/Codes/anki-cli/Instructions'; // Use absolute path
             // Construct the destination path to be directly under the base app directory
             const destinationPath = path.join(BASE_APP_DIR, 'Instructions'); // Full path to base app dir + Instructions
 
