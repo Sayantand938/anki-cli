@@ -16,7 +16,7 @@ export function registerAutomateCommand(program: Command) {
 
             const guidelineFile = guidelineMap[options.mode];
 
-            if (!guidelineFile) {
+            if (!guidelineFile && options.mode !== 'tag_check') { // tag_check doesn't strictly need a guideline file for this script
                 console.error(`❌ Invalid mode: ${options.mode}`);
                 console.error(`Available modes: ${Object.keys(guidelineMap).join(', ')}`);
                 process.exit(1);
@@ -35,8 +35,9 @@ export function registerAutomateCommand(program: Command) {
             // Determine the mode to pass to the export_notes command
             const exportNotesMode = options.mode === 'tag_check' ? 'tag' : options.mode;
 
-            const steps = [
-                {
+            // Define the base steps
+            const baseSteps = [
+                 {
                     cmd: 'anki-cli',
                     args: ['export_notes', '-m', exportNotesMode],
                     label: `export_notes (mode: ${exportNotesMode})`
@@ -52,6 +53,21 @@ export function registerAutomateCommand(program: Command) {
                     label: finalStepCmd
                 }
             ];
+
+            let steps = [];
+
+            // Add clean_tags as the first step ONLY for tag mode
+            if (options.mode === 'tag') {
+                 steps.push({
+                    cmd: 'anki-cli',
+                    args: ['clean_tags'],
+                    label: 'clean_tags'
+                 });
+                 steps = steps.concat(baseSteps); // Add base steps after clean_tags
+            } else {
+                 steps = baseSteps; // Use only base steps for other modes
+            }
+
 
             // Add sl_gen at the end only for tag mode
             if (options.mode === 'tag') {
@@ -82,3 +98,4 @@ export function registerAutomateCommand(program: Command) {
             console.log('\n✅ Full automation workflow completed successfully!');
         });
 }
+
