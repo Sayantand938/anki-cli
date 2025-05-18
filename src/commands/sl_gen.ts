@@ -1,5 +1,9 @@
-import axios, { AxiosError } from 'axios';
-import { Command } from 'commander'; // Ensure Commander's Command type is imported
+import axios, {
+    AxiosError
+} from 'axios';
+import {
+    Command
+} from 'commander'; // Ensure Commander's Command type is imported
 
 // --- Configuration ---
 const ANKI_CONNECT_URL = 'http://localhost:8765';
@@ -9,17 +13,23 @@ const KNOWN_SUBJECTS = ['MATH', 'GI', 'ENG', 'GK'];
 const SUBJECT_SEPARATOR = '::';
 const SL_PADDING = 3;
 
-const SUBJECT_CODE_MAP: Record<string, string> = {
+const SUBJECT_CODE_MAP: Record < string, string > = {
     'MATH': '01',
-    'GI':   '02',
-    'ENG':  '03',
-    'GK':   '04',
+    'GI': '02',
+    'ENG': '03',
+    'GK': '04',
     'Unknown': 'XX'
 };
 
-const EXAM_TAG_INFO: Record<string, { tierCode: string }> = {
-    'Prelims::': { tierCode: '01' },
-    'Mains::':   { tierCode: '02' }
+const EXAM_TAG_INFO: Record < string, {
+    tierCode: string
+} > = {
+    'Prelims::': {
+        tierCode: '01'
+    },
+    'Mains::': {
+        tierCode: '02'
+    }
 };
 
 const EXAM_TAG_PREFIXES = Object.keys(EXAM_TAG_INFO);
@@ -31,25 +41,29 @@ const DEFAULT_SHIFT = '---';
 interface AnkiNoteInfo {
     noteId: number;
     tags: string[];
-    fields: Record<string, { value: string, order: number }>; // Example structure
+    fields: Record < string,
+    {
+        value: string,
+        order: number
+    } > ; // Example structure
     // Add other fields if notesInfo returns more that you use
 }
 
-interface TokenMapping {
+interface SLMapping {
     noteId: number;
-    tokenNo: string;
+    slNo: string;
 }
 
 // Interface for options passed by Commander.js
-export interface TokengenCommandOptions {
-    deck?: string; // Optional deck name from CLI
+export interface SLgenCommandOptions {
+    deck ? : string; // Optional deck name from CLI
 }
 
-function delay(ms: number): Promise<void> {
+function delay(ms: number): Promise < void > {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function invokeAnkiConnect(action: string, params: Record<string, any> = {}): Promise<any> {
+async function invokeAnkiConnect(action: string, params: Record < string, any > = {}): Promise < any > {
     try {
         const response = await axios.post(ANKI_CONNECT_URL, {
             action,
@@ -85,7 +99,9 @@ function extractSubjectFromTags(tags: string[]): string {
     return 'Unknown';
 }
 
-function extractExamDetails(tags: string[]): { tierCode: string; shiftValue: string } {
+function extractExamDetails(tags: string[]): {
+    tierCode: string;shiftValue: string
+} {
     for (const tag of tags) {
         for (const prefix of EXAM_TAG_PREFIXES) {
             if (tag.startsWith(prefix)) {
@@ -99,11 +115,14 @@ function extractExamDetails(tags: string[]): { tierCode: string; shiftValue: str
             }
         }
     }
-    return { tierCode: DEFAULT_TIER, shiftValue: DEFAULT_SHIFT };
+    return {
+        tierCode: DEFAULT_TIER,
+        shiftValue: DEFAULT_SHIFT
+    };
 }
 
-async function buildTokenNoMapping(deckName: string): Promise<TokenMapping[]> {
-    const mapping: TokenMapping[] = [];
+async function buildSLMapping(deckName: string): Promise < SLMapping[] > {
+    const mapping: SLMapping[] = [];
 
     console.log(`Fetching notes from deck: "${deckName}"...`);
     const notes: AnkiNoteInfo[] = await invokeAnkiConnect('notesInfo', {
@@ -116,7 +135,7 @@ async function buildTokenNoMapping(deckName: string): Promise<TokenMapping[]> {
     }
     console.log(`Found ${notes.length} notes.`);
 
-    const subjectCounters: Record<string, number> = {};
+    const subjectCounters: Record < string, number > = {};
     KNOWN_SUBJECTS.forEach(s => subjectCounters[s] = 0);
     subjectCounters['Unknown'] = 0;
 
@@ -126,17 +145,23 @@ async function buildTokenNoMapping(deckName: string): Promise<TokenMapping[]> {
 
         const sl = String(subjectCounters[subject]).padStart(SL_PADDING, '0');
         const subjectCode = SUBJECT_CODE_MAP[subject] || SUBJECT_CODE_MAP['Unknown'];
-        const { tierCode, shiftValue } = extractExamDetails(note.tags);
+        const {
+            tierCode,
+            shiftValue
+        } = extractExamDetails(note.tags);
 
-        const tokenNo = `${tierCode}-${shiftValue}-${subjectCode}-${sl}`;
-        mapping.push({ noteId: note.noteId, tokenNo });
+        const slNo = `${tierCode}-${shiftValue}-${subjectCode}-${sl}`;
+        mapping.push({
+            noteId: note.noteId,
+            slNo
+        });
     }
     return mapping;
 }
 
-async function updateNotesWithTokenNo(mapping: TokenMapping[]): Promise<void> {
+async function updateNotesWithSL(mapping: SLMapping[]): Promise < void > {
     if (mapping.length === 0) {
-        // This case is handled by buildTokenNoMapping, but good to keep as a safeguard
+        // This case is handled by buildSLMapping, but good to keep as a safeguard
         // console.log("No notes to update.");
         return;
     }
@@ -145,17 +170,22 @@ async function updateNotesWithTokenNo(mapping: TokenMapping[]): Promise<void> {
 
     const total = mapping.length;
     for (let i = 0; i < total; i++) {
-        const { noteId, tokenNo } = mapping[i];
+        const {
+            noteId,
+            slNo
+        } = mapping[i];
         const countStr = `[${i + 1}/${total}]`;
         try {
-            // Ensure the field "TokenNo" exists on your note types in Anki
+            // Ensure the field "SL" exists on your note types in Anki
             await invokeAnkiConnect('updateNoteFields', {
                 note: {
                     id: noteId,
-                    fields: { TokenNo: tokenNo } // Make sure 'TokenNo' is an existing field name in your Anki notes
+                    fields: {
+                        SL: slNo
+                    } // Make sure 'SL' is an existing field name in your Anki notes
                 }
             });
-            console.log(`${countStr} ✅ Updated note ${noteId} with TokenNo: ${tokenNo}`);
+            console.log(`${countStr} ✅ Updated note ${noteId} with SL: ${slNo}`);
         } catch (err: any) { // Catch specific error type if known
             console.error(`${countStr} ❌ Failed to update note ${noteId}: ${err.message}`);
         }
@@ -168,28 +198,28 @@ async function updateNotesWithTokenNo(mapping: TokenMapping[]): Promise<void> {
 
 // --- CLI Command Action ---
 // This is the function that commander.js will call
-export async function tokengenAction(options: TokengenCommandOptions): Promise<void> {
+export async function slgenAction(options: SLgenCommandOptions): Promise < void > {
     const targetDeck = options.deck || DEFAULT_TARGET_DECK_NAME;
-    console.log(`Starting TokenNo generation process for deck: "${targetDeck}"...`);
+    console.log(`Starting SL generation process for deck: "${targetDeck}"...`);
 
     // Errors will propagate to the main index.ts catch block
-    const mapping = await buildTokenNoMapping(targetDeck);
+    const mapping = await buildSLMapping(targetDeck);
     if (mapping.length > 0) {
-        await updateNotesWithTokenNo(mapping);
+        await updateNotesWithSL(mapping);
     }
-    // Message for no notes or no mapping is handled within buildTokenNoMapping or by mapping.length check.
-    console.log("TokenNo generation process finished.");
+    // Message for no notes or no mapping is handled within buildSLMapping or by mapping.length check.
+    console.log("SL generation process finished.");
 }
 
 // Function to register the command with Commander
-export function registerTokengenCommand(program: Command) {
-  program
-    .command('token_gen')
-    .description('Generates and updates TokenNo for notes in a specified Anki deck.')
-    .option('-d, --deck <name>', 'Specify the target Anki deck name', DEFAULT_TARGET_DECK_NAME)
-    .action(async (options: TokengenCommandOptions) => {
-        // The `options` object will contain `deck` if provided by the user,
-        // or the default value if not.
-        await tokengenAction(options);
-    });
+export function registerSLgenCommand(program: Command) {
+    program
+        .command('sl_gen')
+        .description('Generates and updates SL for notes in a specified Anki deck.')
+        .option('-d, --deck <name>', 'Specify the target Anki deck name', DEFAULT_TARGET_DECK_NAME)
+        .action(async (options: SLgenCommandOptions) => {
+            // The `options` object will contain `deck` if provided by the user,
+            // or the default value if not.
+            await slgenAction(options);
+        });
 }

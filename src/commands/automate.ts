@@ -4,7 +4,7 @@ import { execa } from 'execa';
 export function registerAutomateCommand(program: Command) {
     program
         .command('automate')
-        .description('Runs export_notes → process_with_gemini → [tag_update or extra_update or tag_check.ts] → (token_gen only in tag mode)')
+        .description('Runs export_notes → process_with_gemini → [tag_update or extra_update or tag_check.ts] → (sl_gen only in tag mode)')
         .option('--mode <type>', 'Specify guidelines mode (e.g. tag, gk, eng, tag_check)', 'tag')
         .action(async (options) => {
             const guidelineMap: Record<string, string> = {
@@ -53,12 +53,12 @@ export function registerAutomateCommand(program: Command) {
                 }
             ];
 
-            // Add token_gen at the end only for tag mode
+            // Add sl_gen at the end only for tag mode
             if (options.mode === 'tag') {
                 steps.push({
                     cmd: 'anki-cli',
-                    args: ['token_gen'],
-                    label: 'token_gen'
+                    args: ['sl_gen'],
+                    label: 'sl_gen'
                 });
             }
 

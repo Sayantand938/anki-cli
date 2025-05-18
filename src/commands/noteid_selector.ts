@@ -8,7 +8,7 @@ const ANKI_CONNECT_URL = 'http://localhost:8765';
 const ANKI_API_VERSION = 6;
 const ANKI_REQUEST_TIMEOUT = 15000;
 const DEFAULT_DECK_NAME = 'Custom Study Session';
-const TOKEN_FIELD_NAME = 'TokenNo';
+const SL_FIELD_NAME = 'SL'; 
 
 // --- Type Definitions ---
 interface AnkiNoteRaw {
@@ -19,7 +19,7 @@ interface AnkiNoteRaw {
 
 interface ProcessedNote {
     noteId: number;
-    tokenNo: string;
+    sl: string; 
 }
 
 export interface NoteIdSelectorOptions {
@@ -83,22 +83,23 @@ async function fetchNotesFromDeck(deckName: string): Promise<ProcessedNote[]> {
     const processedNotes: ProcessedNote[] = [];
     let skippedCount = 0;
     for (const note of notesRaw) {
-        const tokenValue = note.fields[TOKEN_FIELD_NAME]?.value;
-        if (note.noteId && tokenValue && tokenValue.trim() !== "") {
+        const slValue = note.fields[SL_FIELD_NAME]?.value;
+        if (note.noteId && slValue && slValue.trim() !== "") {
             processedNotes.push({
                 noteId: note.noteId,
-                tokenNo: tokenValue.trim(),
+                sl: slValue.trim(), 
             });
         } else {
             skippedCount++;
         }
     }
     if (skippedCount > 0) {
-        console.warn(`[INFO] Skipped ${skippedCount} notes due to missing Note ID or empty '${TOKEN_FIELD_NAME}' field.`);
+        console.warn(`[INFO] Skipped ${skippedCount} notes due to missing Note ID or empty '${SL_FIELD_NAME}' field.`);
     }
-    // **Sort all processed notes by tokenNo here**
-    processedNotes.sort((a, b) => a.tokenNo.localeCompare(b.tokenNo));
-    console.log(`Processed and sorted ${processedNotes.length} notes with valid TokenNo.`);
+
+    // Sort all processed notes by sl
+    processedNotes.sort((a, b) => a.sl.localeCompare(b.sl));
+    console.log(`Processed and sorted ${processedNotes.length} notes with valid SL.`);
     return processedNotes;
 }
 
@@ -111,11 +112,11 @@ function formatNoteIdsForClipboard(notes: ProcessedNote[]): string {
 
 async function copyToClipboard(
     text: string,
-    displayStartToken: string,
-    displayEndToken: string,
+    displayStartSl: string,
+    displayEndSl: string,
     selectedCount: number,
     isCountMode: boolean,
-    userRequestedStartToken?: string // For count mode message enhancement
+    userRequestedStartSl?: string // For count mode message enhancement
 ): Promise<void> {
     if (!text) {
         console.log("Nothing to copy to clipboard.");
@@ -126,12 +127,12 @@ async function copyToClipboard(
         await clipboardy.write(text);
         let message: string;
         if (isCountMode) {
-            message = `Note IDs for ${selectedCount} notes (tokens ${displayStartToken} to ${displayEndToken}) copied to clipboard ✅`;
-            if (userRequestedStartToken && userRequestedStartToken !== displayStartToken) {
-                message += ` (requested from ${userRequestedStartToken})`;
+            message = `Note IDs for ${selectedCount} notes (SLs ${displayStartSl} to ${displayEndSl}) copied to clipboard ✅`;
+            if (userRequestedStartSl && userRequestedStartSl !== displayStartSl) {
+                message += ` (requested from ${userRequestedStartSl})`;
             }
         } else {
-            message = `Note IDs for tokens from ${displayStartToken} to ${displayEndToken} (${selectedCount} notes) copied to clipboard ✅`;
+            message = `Note IDs for SLs from ${displayStartSl} to ${displayEndSl} (${selectedCount} notes) copied to clipboard ✅`;
         }
         console.log(message);
     } catch (error: any) {
@@ -145,14 +146,14 @@ async function copyToClipboard(
 
 // --- CLI Command Action ---
 export async function noteidselectorAction(options: NoteIdSelectorOptions): Promise<void> {
-    const { start: startTokenInput, end: endTokenInput, count: countInput, deck } = options;
+    const { start: startSlInput, end: endSlInput, count: countInput, deck } = options;
     const deckNameToUse = deck || DEFAULT_DECK_NAME;
 
     // Validation for options
-    if (endTokenInput && typeof countInput !== 'undefined') {
+    if (endSlInput && typeof countInput !== 'undefined') {
         throw new Error("Cannot use both --end and --count. Please specify one or the other.");
     }
-    if (!endTokenInput && typeof countInput === 'undefined') {
+    if (!endSlInput && typeof countInput === 'undefined') {
         throw new Error("Either --end or --count must be provided along with --start.");
     }
     if (typeof countInput !== 'undefined' && (isNaN(countInput) || countInput <= 0)) {
@@ -164,14 +165,12 @@ export async function noteidselectorAction(options: NoteIdSelectorOptions): Prom
 
     if (typeof countInput === 'number') {
         mode = 'count';
-        logMessage = `Fetching notes starting from TokenNo ${startTokenInput} for a count of ${countInput}.`;
-    } else { // endTokenInput must be present due to validation above
+        logMessage = `Fetching notes starting from SL ${startSlInput} for a count of ${countInput}.`;
+    } else { // endSlInput must be present due to validation above
         mode = 'range';
-        logMessage = `Fetching notes by TokenNo range: ${startTokenInput} to ${endTokenInput}.`;
-        if (startTokenInput > endTokenInput!) {
-             console.warn(`Warning: Start token "${startTokenInput}" is greater than end token "${endTokenInput}". No notes will be selected if this is a strict range.`);
-            // Depending on desired behavior, you might throw an error or let it proceed to find 0 notes.
-            // The current filter logic (>= start && <= end) will correctly yield 0 notes.
+        logMessage = `Fetching notes by SL range: ${startSlInput} to ${endSlInput}.`;
+        if (startSlInput > endSlInput!) {
+            console.warn(`Warning: Start SL "${startSlInput}" is greater than end SL "${endSlInput}". No notes will be selected if this is a strict range.`);
         }
     }
 
@@ -184,22 +183,22 @@ export async function noteidselectorAction(options: NoteIdSelectorOptions): Prom
     }
 
     let filteredNotes: ProcessedNote[] = [];
-    
+
     if (mode === 'count') {
-        const startIndex = allSortedNotes.findIndex(note => note.tokenNo >= startTokenInput);
+        const startIndex = allSortedNotes.findIndex(note => note.sl >= startSlInput);
         if (startIndex !== -1) {
             filteredNotes = allSortedNotes.slice(startIndex, startIndex + countInput!);
         }
     } else { // mode === 'range'
-        filteredNotes = allSortedNotes.filter(note => note.tokenNo >= startTokenInput && note.tokenNo <= endTokenInput!);
+        filteredNotes = allSortedNotes.filter(note => note.sl >= startSlInput && note.sl <= endSlInput!);
     }
 
     if (filteredNotes.length === 0) {
         let reason = "";
         if (mode === 'count') {
-            reason = ` (requested start "${startTokenInput}", count ${countInput})`;
+            reason = ` (requested start "${startSlInput}", count ${countInput})`;
         } else {
-            reason = ` (requested range "${startTokenInput}" to "${endTokenInput}")`;
+            reason = ` (requested range "${startSlInput}" to "${endSlInput}")`;
         }
         console.log(`No notes found matching the criteria${reason} in deck "${deckNameToUse}".`);
         return;
@@ -207,17 +206,17 @@ export async function noteidselectorAction(options: NoteIdSelectorOptions): Prom
 
     console.log(`Found ${filteredNotes.length} notes matching criteria.`);
 
-    const displayStartToken = filteredNotes[0].tokenNo;
-    const displayEndToken = filteredNotes[filteredNotes.length - 1].tokenNo;
+    const displayStartSl = filteredNotes[0].sl;
+    const displayEndSl = filteredNotes[filteredNotes.length - 1].sl;
 
     const formattedNoteIds = formatNoteIdsForClipboard(filteredNotes);
     await copyToClipboard(
         formattedNoteIds,
-        displayStartToken,
-        displayEndToken,
+        displayStartSl,
+        displayEndSl,
         filteredNotes.length,
         mode === 'count',
-        mode === 'count' ? startTokenInput : undefined
+        mode === 'count' ? startSlInput : undefined
     );
 
     console.log("Note ID selection process finished.");
@@ -225,14 +224,14 @@ export async function noteidselectorAction(options: NoteIdSelectorOptions): Prom
 
 // --- Function to register the command with Commander ---
 export function registerNoteIdSelectorCommand(program: Command) {
-  program
-    .command('noteid_selector')
-    .description('Fetches notes by TokenNo (range or start+count) and copies their Note IDs to clipboard.')
-    .requiredOption('-s, --start <tokenNo>', 'Starting TokenNo for the range/selection')
-    .option('-e, --end <tokenNo>', 'Ending TokenNo for the range (cannot be used with --count)')
-    .option('-c, --count <number>', 'Number of notes to select starting from/after --start (cannot be used with --end)', s => parseInt(s, 10))
-    .option('-d, --deck <name>', `Target Anki deck name (default: "${DEFAULT_DECK_NAME}")`)
-    .action(async (options: NoteIdSelectorOptions) => {
-        await noteidselectorAction(options);
-    });
+    program
+        .command('noteid_selector')
+        .description('Fetches notes by SL (range or start+count) and copies their Note IDs to clipboard.')
+        .requiredOption('-s, --start <sl>', 'Starting SL for the range/selection')
+        .option('-e, --end <sl>', 'Ending SL for the range (cannot be used with --count)')
+        .option('-c, --count <number>', 'Number of notes to select starting from/after --start (cannot be used with --end)', s => parseInt(s, 10))
+        .option('-d, --deck <name>', `Target Anki deck name (default: "${DEFAULT_DECK_NAME}")`)
+        .action(async (options: NoteIdSelectorOptions) => {
+            await noteidselectorAction(options);
+        });
 }

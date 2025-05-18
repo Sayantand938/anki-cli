@@ -11,7 +11,6 @@ const ANKICONNECT_URL = 'http://127.0.0.1:8765';
 // --- Type Definitions ---
 interface GeminiTagEntry {
     noteId: number;
-    TokenNo?: string; // Optional field
     newTag: string;
 }
 

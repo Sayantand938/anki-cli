@@ -1,11 +1,15 @@
 import fs from "fs/promises";
 import path from "path";
-import axios, { AxiosError } from 'axios';
-import { Command } from 'commander';
+import axios, {
+    AxiosError
+} from 'axios';
+import {
+    Command
+} from 'commander';
 
 // Configuration constants
 const ANKI_CONNECT_URL = "http://localhost:8765";
-const TOKEN_FIELD_NAME = "TokenNo";
+const SL_FIELD_NAME = "SL"; // Updated field name constant
 const TARGET_UPDATE_FIELD = "Video";
 const ANKI_API_VERSION = 6;
 const ANKI_REQUEST_TIMEOUT = 15000;
@@ -22,12 +26,16 @@ const INDENT = "    ";
 // Type Definitions
 interface AnkiNoteInfoFetched {
     noteId: number;
-    fields: Record<string, { value: string, order: number }>;
+    fields: Record < string,
+    {
+        value: string,
+        order: number
+    } > ;
 }
 
-interface ExtractedNoteInfo {
+interface ExtractedSLInfo { // Renamed interface
     noteId: number;
-    tokenNo: string;
+    slNo: string; // Renamed property
 }
 
 interface MkvFile {
@@ -40,7 +48,7 @@ interface ProcessItem {
     originalPath: string;
     originalFilename: string;
     noteId: number;
-    token: string;
+    sl: string; // Renamed property
     newFilename: string;
     newPathInSource: string; // Path after renaming in source
     targetCopyPath: string; // Final path in Anki media
@@ -49,20 +57,22 @@ interface ProcessItem {
 
 export interface VideolinkCommandOptions {
     path: string; // Source folder path for MKV files
-    ankiMediaDir?: string; // Optional override for Anki media directory
-    deck?: string; // Optional override for Anki deck name
-    tokenField?: string; // Optional override for the token field name
-    videoField?: string; // Optional override for the target video field name
+    ankiMediaDir ? : string; // Optional override for Anki media directory
+    deck ? : string; // Optional override for Anki deck name
+    slField ? : string; // Renamed option property
+    videoField ? : string; // Optional override for the target video field name
 }
 
 // Helper: Send request to AnkiConnect
-async function ankiConnectRequest(action: string, params: Record<string, any> = {}): Promise<any> {
+async function ankiConnectRequest(action: string, params: Record < string, any > = {}): Promise < any > {
     try {
         const response = await axios.post(ANKI_CONNECT_URL, {
             action: action,
             version: ANKI_API_VERSION,
             params: params
-        }, { timeout: ANKI_REQUEST_TIMEOUT });
+        }, {
+            timeout: ANKI_REQUEST_TIMEOUT
+        });
 
         if (response.data.error) {
             // Enhance error messages for specific AnkiConnect errors
@@ -100,10 +110,12 @@ async function ankiConnectRequest(action: string, params: Record<string, any> = 
 }
 
 // Helper: Fetch required info from Anki notes in a deck
-async function fetchNoteInfoForDeck(deckName: string, tokenFieldName: string): Promise<ExtractedNoteInfo[]> {
+async function fetchSLInfoForDeck(deckName: string, slFieldName: string): Promise < ExtractedSLInfo[] > { // Renamed function and parameter
     let notesInfo: AnkiNoteInfoFetched[];
     try {
-        notesInfo = await ankiConnectRequest("notesInfo", { query: `deck:"${deckName}"` });
+        notesInfo = await ankiConnectRequest("notesInfo", {
+            query: `deck:"${deckName}"`
+        });
     } catch (err: any) {
         throw new Error(`[Anki] Failed to fetch notes info: ${err.message}`);
     }
@@ -112,45 +124,56 @@ async function fetchNoteInfoForDeck(deckName: string, tokenFieldName: string): P
         return [];
     }
 
-    const extractedNotes: ExtractedNoteInfo[] = [];
+    const extractedNotes: ExtractedSLInfo[] = []; // Using renamed interface
     let skippedCount = 0;
 
     notesInfo.forEach(note => {
-        const tokenValue = note?.fields?.[tokenFieldName]?.value;
+        const slValue = note?.fields?.[slFieldName]?.value; // Using renamed parameter
         const noteId = note?.noteId;
 
-        if (!noteId || !tokenValue) {
+        if (!noteId || !slValue) {
             skippedCount++;
             return;
         }
 
-        const sanitizedToken = tokenValue.replace(/[<>:"/\\|?*\x00-\x1F]/g, '_').trim();
-        if (!sanitizedToken) {
+        const sanitizedSL = slValue.replace(/[<>:"/\\|?*\x00-\x1F]/g, '_').trim(); // Renamed variable
+        if (!sanitizedSL) {
             skippedCount++;
             return;
         }
 
-        extractedNotes.push({ noteId: noteId, tokenNo: sanitizedToken });
+        extractedNotes.push({
+            noteId: noteId,
+            slNo: sanitizedSL
+        }); // Using renamed property
     });
 
     if (skippedCount > 0) {
-        console.warn(`[INFO] ${skippedCount} Anki notes were excluded due to missing Note ID or missing/invalid '${tokenFieldName}'.`);
+        console.warn(`[INFO] ${skippedCount} Anki notes were excluded due to missing Note ID or missing/invalid '${slFieldName}'.`); // Using renamed parameter
     }
     return extractedNotes;
 }
 
 // Helper: Get and sort MKV files by creation time
-async function getSortedMkvFiles(folderPath: string): Promise<MkvFile[]> {
-    let filesWithStats: { path: string; name: string; timeMs: number }[] = [];
+async function getSortedMkvFiles(folderPath: string): Promise < MkvFile[] > {
+    let filesWithStats: {
+        path: string;name: string;timeMs: number
+    } [] = [];
     try {
-        const dirents = await fs.readdir(folderPath, { withFileTypes: true });
+        const dirents = await fs.readdir(folderPath, {
+            withFileTypes: true
+        });
         const mkvFiles = dirents.filter(dirent => dirent.isFile() && path.extname(dirent.name).toLowerCase() === '.mkv');
 
         for (const file of mkvFiles) {
             const fullPath = path.join(folderPath, file.name);
             try {
                 const stats = await fs.stat(fullPath);
-                filesWithStats.push({ path: fullPath, name: file.name, timeMs: stats.birthtimeMs || stats.mtimeMs });
+                filesWithStats.push({
+                    path: fullPath,
+                    name: file.name,
+                    timeMs: stats.birthtimeMs || stats.mtimeMs
+                });
             } catch (statError: any) {
                 console.warn(`[FS] Warning: Could not get stats for "${file.name}": ${statError.message}. Skipping file.`);
             }
@@ -160,11 +183,14 @@ async function getSortedMkvFiles(folderPath: string): Promise<MkvFile[]> {
     }
 
     filesWithStats.sort((a, b) => a.timeMs - b.timeMs);
-    return filesWithStats.map(f => ({ path: f.path, name: f.name }));
+    return filesWithStats.map(f => ({
+        path: f.path,
+        name: f.name
+    }));
 }
 
 // Helper: Simple delay
-function delay(ms: number): Promise<void> {
+function delay(ms: number): Promise < void > {
     if (ms <= 0) return Promise.resolve();
     return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -174,15 +200,19 @@ async function processFilesAndNotes(
     sourceFolderPath: string,
     deckNameToUse: string,
     targetCopyDir: string,
-    tokenFieldName: string,
+    slFieldName: string, // Renamed parameter
     targetUpdateFieldAnki: string
-): Promise<number> { // Returns exit code (0 for success, 1 for failure)
+): Promise < number > { // Returns exit code (0 for success, 1 for failure)
     let fileCount = 0;
     let noteCount = 0;
     let processCount = 0;
-    let successRenameCount = 0, failRenameCount = 0, skippedRenameCount = 0;
-    let successCopyCount = 0, failCopyCount = 0;
-    let successAnkiUpdateCount = 0, failAnkiUpdateCount = 0;
+    let successRenameCount = 0,
+        failRenameCount = 0,
+        skippedRenameCount = 0;
+    let successCopyCount = 0,
+        failCopyCount = 0;
+    let successAnkiUpdateCount = 0,
+        failAnkiUpdateCount = 0;
     let overallSuccessCount = 0;
 
     // 1. Preparation and Validation
@@ -196,7 +226,7 @@ async function processFilesAndNotes(
         else throw new Error(`Error accessing target copy directory "${targetCopyDir}": ${err.message}`);
     }
 
-    const fetchedNotes = await fetchNoteInfoForDeck(deckNameToUse, tokenFieldName);
+    const fetchedNotes = await fetchSLInfoForDeck(deckNameToUse, slFieldName); // Using renamed function and parameter
     noteCount = fetchedNotes.length;
     if (noteCount === 0) {
         console.error("[INFO] No valid notes fetched from Anki. Nothing to process.");
@@ -223,15 +253,15 @@ async function processFilesAndNotes(
     for (let i = 0; i < processCount; i++) {
         const fileInfo = sortedMkvFiles[i];
         const noteInfo = fetchedNotes[i];
-        const token = noteInfo.tokenNo;
-        const newFilename = `${token}.mkv`;
+        const sl = noteInfo.slNo; // Using renamed property
+        const newFilename = `${sl}.mkv`; // Using renamed variable
         const newPathInSource = path.join(sourceFolderPath, newFilename);
         itemsToProcess.push({
             index: i,
             originalPath: fileInfo.path,
             originalFilename: fileInfo.name,
             noteId: noteInfo.noteId,
-            token: token,
+            sl: sl, // Using renamed property
             newFilename: newFilename,
             newPathInSource: newPathInSource,
             targetCopyPath: path.join(targetCopyDir, newFilename),
@@ -248,14 +278,14 @@ async function processFilesAndNotes(
 
     for (let i = 0; i < itemsToProcess.length; i++) {
         const item = itemsToProcess[i];
-        console.log(`\n[${i + 1}/${processCount}] NoteID: ${item.noteId}, Token: ${item.token}`);
+        console.log(`\n[${i + 1}/${processCount}] NoteID: ${item.noteId}, SL: ${item.sl}`); // Using renamed property
 
         let pathForCopy = item.originalPath; // Start with original path for copy
         let itemFullyProcessed = true;
 
         // Step 2a: Rename (in source folder) or check if already renamed
         if (item.originalPath === item.newPathInSource) {
-            console.log(`${INDENT}${SUCCESS_MARK} Renaming skipped (file "${item.originalFilename}" already matches token name)`);
+            console.log(`${INDENT}${SUCCESS_MARK} Renaming skipped (file "${item.originalFilename}" already matches SL name)`); // Updated message
             successRenameCount++;
             skippedRenameCount++;
         } else {
@@ -315,7 +345,14 @@ async function processFilesAndNotes(
 
         // Step 2c: Update Anki Note
         try {
-            const payload = { note: { id: item.noteId, fields: { [targetUpdateFieldAnki]: item.soundTag } } };
+            const payload = {
+                note: {
+                    id: item.noteId,
+                    fields: {
+                        [targetUpdateFieldAnki]: item.soundTag
+                    }
+                }
+            };
             await ankiConnectRequest("updateNoteFields", payload);
             console.log(`${INDENT}${SUCCESS_MARK} Updating Anki field "${targetUpdateFieldAnki}" with "${item.soundTag}"`);
             successAnkiUpdateCount++;
@@ -346,7 +383,7 @@ async function processFilesAndNotes(
 }
 
 // CLI Command Action: Handles command line arguments and orchestrates the process
-export async function videolinkAction(options: VideolinkCommandOptions): Promise<void> {
+export async function videolinkAction(options: VideolinkCommandOptions): Promise < void > {
     let resolvedSourcePath = '';
     try {
         resolvedSourcePath = path.resolve(options.path.trim());
@@ -363,21 +400,21 @@ export async function videolinkAction(options: VideolinkCommandOptions): Promise
 
     const deckNameToUse = options.deck || DEFAULT_DECK_NAME;
     const targetCopyDir = options.ankiMediaDir || DEFAULT_TARGET_COPY_DIR;
-    const tokenFieldName = options.tokenField || TOKEN_FIELD_NAME;
+    const slFieldName = options.slField || SL_FIELD_NAME; // Using renamed option property and constant
     const targetUpdateFieldAnki = options.videoField || TARGET_UPDATE_FIELD;
 
     console.log(`Starting video linking process...`);
     console.log(`Source MKVs: "${resolvedSourcePath}"`);
     console.log(`Target Anki Deck: "${deckNameToUse}"`);
     console.log(`Anki Media Dir: "${targetCopyDir}"`);
-    console.log(`Token Field: "${tokenFieldName}"`);
+    console.log(`SL Field: "${slFieldName}"`); // Updated output message
     console.log(`Video Field: "${targetUpdateFieldAnki}"`);
 
     const exitCode = await processFilesAndNotes(
         resolvedSourcePath,
         deckNameToUse,
         targetCopyDir,
-        tokenFieldName,
+        slFieldName, // Using renamed parameter
         targetUpdateFieldAnki
     );
 
@@ -392,11 +429,11 @@ export async function videolinkAction(options: VideolinkCommandOptions): Promise
 export function registerVideolinkCommand(program: Command) {
     program
         .command('video_link')
-        .description('Rename/copy MKV files based on Anki note tokens and update a video field in Anki.')
+        .description('Rename/copy MKV files based on Anki note SLs and update a video field in Anki.') // Updated description
         .requiredOption('-p, --path <folderPath>', 'Full path to the folder containing MKV files')
         .option('--deck <name>', `Target Anki deck name (default: "${DEFAULT_DECK_NAME}")`)
         .option('--anki-media-dir <mediaPath>', `Path to Anki's collection.media directory (default: "${DEFAULT_TARGET_COPY_DIR}")`)
-        .option('--token-field <fieldName>', `Anki field name containing the token (default: "${TOKEN_FIELD_NAME}")`)
+        .option('--sl-field <fieldName>', `Anki field name containing the SL (default: "${SL_FIELD_NAME}")`) // Updated option name and help text
         .option('--video-field <fieldName>', `Anki field name to update with video link (default: "${TARGET_UPDATE_FIELD}")`)
         .action(async (options: VideolinkCommandOptions) => {
             try {

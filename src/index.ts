@@ -2,7 +2,7 @@ import { program } from 'commander';
 import { version } from '../package.json';
 import { registerSyncCommand } from "./commands/sync";
 import { registerAddCommand } from "./commands/add";
-import { registerTokengenCommand } from "./commands/token_gen";
+import { registerSLgenCommand } from "./commands/sl_gen";
 import { registerVideolinkCommand } from "./commands/video_link";
 import { registerDeckstatsCommand } from "./commands/deckstats";
 import { registerNoteIdSelectorCommand } from "./commands/noteid_selector";
@@ -24,7 +24,7 @@ async function main() {
     // Register all commands
     registerSyncCommand(program);
     registerAddCommand(program);
-    registerTokengenCommand(program);
+    registerSLgenCommand(program);
     registerVideolinkCommand(program);
     registerDeckstatsCommand(program);
     registerNoteIdSelectorCommand(program);

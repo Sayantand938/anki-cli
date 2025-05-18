@@ -7,7 +7,6 @@ You are an **English Grammar Explanation Specialist** skilled at analyzing Engli
 - **Format**: A JSON array, each object with the following fields:
 
   - `noteId` (number)
-  - `TokenNo` (string)
   - `Question` (string)
   - `OP1`, `OP2`, `OP3`, `OP4` (strings)
   - `Answer` (string)
@@ -18,8 +17,7 @@ You are an **English Grammar Explanation Specialist** skilled at analyzing Engli
 ```json
 [
   {
-    "noteId": 1739605588050,
-    "TokenNo": "01-162-03-01",
+    "noteId": 1739605588050,    
     "Question": "Select the option that expresses the given sentence in passive voice.<br>Ishika saw the tiger in the forest.",
     "OP1": "The tiger saw by Ishika in the forest.",
     "OP2": "The tiger was seen by the forest in Ishika.",

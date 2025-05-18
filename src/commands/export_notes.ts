@@ -49,7 +49,6 @@ interface EngModeNote {
 
 interface FullModeNote {
     noteId: number;
-    TokenNo: string;
     Question: string;
     OP1: string;
     OP2: string;
@@ -60,7 +59,6 @@ interface FullModeNote {
     Tags: string[];
 }
 
-
 // Union type for transformed notes based on mode
 type TransformedNote = TagModeNote | GkModeNote | EngModeNote | FullModeNote;
 
@@ -68,15 +66,12 @@ type TransformedNote = TagModeNote | GkModeNote | EngModeNote | FullModeNote;
 type ExportMode = 'tag' | 'gk' | 'eng' | 'full';
 
 // --- Utility Functions ---
-
 /**
  * Determines the application name from package.json or provides a default.
  * @returns The application name.
  */
 const getAppNameFromPackageJson = (): string => {
     try {
-        // Note: __dirname might not be reliable in all JS environments (e.g., bundled code).
-        // Consider alternative ways to locate package.json if this causes issues.
         const packageJsonPath = path.resolve(__dirname, '..', '..', 'package.json');
         const packageJsonContent = readFileSync(packageJsonPath, 'utf-8');
         const packageJson = JSON.parse(packageJsonContent);
@@ -85,20 +80,16 @@ const getAppNameFromPackageJson = (): string => {
         }
         return 'anki-note-exporter-default';
     } catch (error) {
-        // Handle errors like file not found or JSON parsing issues
-        // console.warn(`Could not read package.json to determine app name. Using default: anki-note-exporter-default. Error: ${error}`); // Reduced output
         return 'anki-note-exporter-default';
     }
 };
 
 const APP_NAME = getAppNameFromPackageJson();
 const applicationPaths = envPaths(APP_NAME, { suffix: '' });
-
 const OUTPUT_DIR = applicationPaths.data;
 const OUTPUT_FILE = path.join(OUTPUT_DIR, 'input.json');
 
 // --- Core Logic Functions ---
-
 /**
  * Fetches notes from AnkiConnect for a specific deck.
  * @param deckName The name of the Anki deck to query.
@@ -106,8 +97,6 @@ const OUTPUT_FILE = path.join(OUTPUT_DIR, 'input.json');
  * @throws AxiosError if the HTTP request fails, or Error if AnkiConnect returns an error.
  */
 async function fetchNotesFromAnki(deckName: string): Promise<AnkiConnectNoteInfo[]> {
-    // console.log(`Attempting to fetch notes from AnkiConnect for deck "${deckName}"...`); // Reduced output
-
     const payload = {
         action: "notesInfo",
         version: 6,
@@ -115,24 +104,17 @@ async function fetchNotesFromAnki(deckName: string): Promise<AnkiConnectNoteInfo
             query: `deck:"${deckName}"`
         }
     };
-
     try {
         const response = await axios.post<AnkiConnectResponse>(ANKICONNECT_URL, payload, {
             headers: { 'Content-Type': 'application/json' }
         });
-
         if (response.data.error) {
-            // AnkiConnect returned an error message
             throw new Error(`AnkiConnect error: ${response.data.error}. Ensure Anki is running, AnkiConnect is installed, and the deck "${deckName}" exists.`);
         }
-
-        // Return empty array if result is null or empty
         return response.data.result || [];
-
     } catch (error) {
-        // Re-throw the error after logging relevant details
         if (axios.isAxiosError(error)) {
-             if (error.code === 'ECONNREFUSED') {
+            if (error.code === 'ECONNREFUSED') {
                 console.error(`Could not connect to AnkiConnect at ${ANKICONNECT_URL}.`);
                 console.error('Ensure Anki is running and AnkiConnect is active.');
             } else if (error.response) {
@@ -145,13 +127,12 @@ async function fetchNotesFromAnki(deckName: string): Promise<AnkiConnectNoteInfo
             } else if (error.request) {
                 console.error(`No response received from AnkiConnect.`);
             } else {
-                 console.error(`Axios request error: ${error.message}`);
+                console.error(`Axios request error: ${error.message}`);
             }
-            throw error; // Re-throw the Axios error
+            throw error;
         } else {
-            // Handle non-Axios errors
             console.error(`An unexpected error occurred during AnkiConnect communication: ${error}`);
-            throw error; // Re-throw other errors
+            throw error;
         }
     }
 }
@@ -200,7 +181,6 @@ function transformAnkiNotes(notes: AnkiConnectNoteInfo[], mode: ExportMode): Tra
             default:
                 return {
                     noteId: noteId,
-                    TokenNo: getFieldValue('TokenNo'),
                     Question: getFieldValue('Question'),
                     OP1: getFieldValue('OP1'),
                     OP2: getFieldValue('OP2'),
@@ -223,25 +203,22 @@ function transformAnkiNotes(notes: AnkiConnectNoteInfo[], mode: ExportMode): Tra
  * @throws Error if writing the file fails.
  */
 async function writeOutputToFile(notes: TransformedNote[], outputPath: string, outputDir: string): Promise<void> {
-    // console.log(`Writing data to output file: ${path.relative(process.cwd(), outputPath).replace(/\//g, '\\')}...`); // Reduced output
     try {
         await fs.mkdir(outputDir, { recursive: true });
         await fs.writeFile(outputPath, JSON.stringify(notes, null, 2));
-        // console.log(`Successfully wrote ${notes.length} notes.`); // Reduced output
     } catch (error) {
-         if (error instanceof Error && (error.message?.includes('EACCES') || error.message?.includes('EPERM'))) {
+        if (error instanceof Error && (error.message?.includes('EACCES') || error.message?.includes('EPERM'))) {
             console.error(`Permission denied. Cannot create directory: ${outputDir} or write to file: ${outputPath}`);
         } else if (error instanceof Error && error.message?.includes('ENOENT') && (error.message?.includes(outputDir) || error.message?.includes(outputPath))) {
             console.error(`Cannot create directory: ${outputDir} or write to file: ${outputPath}. Path component missing.`);
         } else {
             console.error(`Error writing output file: ${error}`);
         }
-        throw error; // Re-throw the error for the caller to handle status logging
+        throw error;
     }
 }
 
 // --- Command Registration ---
-
 /**
  * Registers the 'export_notes' command with the Commander program.
  * @param program The Commander program instance.
@@ -251,9 +228,8 @@ export function registerExportNotesCommand(program: Command) {
         .command('export_notes')
         .description(`Exports notes from Anki deck "${TARGET_ANKI_DECK_NAME}"`)
         .option('-m, --mode <mode>', 'Export mode: tag, gk, eng, full', 'full') // Added --mode option with default 'full'
-        .action(async (options) => { // Access options here
+        .action(async (options) => {
             const mode: ExportMode = options.mode.toLowerCase(); // Get the selected mode
-
             // Validate the mode
             const validModes: ExportMode[] = ['tag', 'gk', 'eng', 'full'];
             if (!validModes.includes(mode)) {
@@ -263,42 +239,34 @@ export function registerExportNotesCommand(program: Command) {
 
             console.log('Starting note export process...');
             console.log(`Target Deck: "${TARGET_ANKI_DECK_NAME}"`);
-            console.log(`Export Mode: "${mode}"`); // Log the selected mode
-            // Use path.basename() to display only the filename
+            console.log(`Export Mode: "${mode}"`);
             console.log(`Output File: "${path.basename(OUTPUT_FILE)}"`);
 
             try {
-                // 1. Fetch notes from AnkiConnect
                 const ankiNotes = await fetchNotesFromAnki(TARGET_ANKI_DECK_NAME);
-
                 if (ankiNotes.length === 0) {
                     console.warn(`No notes found in deck "${TARGET_ANKI_DECK_NAME}".`);
-                    // Still write an empty array to the file
                     await writeOutputToFile([], OUTPUT_FILE, OUTPUT_DIR);
-                    console.log(`Count: 0`); // Explicitly show count is 0
+                    console.log(`Count: 0`);
                     console.log(`Status: ✅ No notes exported, empty file created.`);
-                    return; // Exit successfully
+                    return;
                 }
 
-                // 2. Transform the fetched notes based on the mode
                 const transformedNotes = transformAnkiNotes(ankiNotes, mode);
-
-                // 3. Write the transformed notes to a file
                 await writeOutputToFile(transformedNotes, OUTPUT_FILE, OUTPUT_DIR);
 
                 console.log(`Count: ${transformedNotes.length}`);
                 console.log(`Status: ✅`);
-
             } catch (error) {
-                // Generic error handler for the entire process
-                console.error(`\nExport process failed.`);
-                 if (error instanceof Error) {
-                     console.error(`Error details: ${error.message}`);
-                 } else {
-                     console.error(`An unknown error occurred.`);
-                 }
+                console.error(`
+Export process failed.`);
+                if (error instanceof Error) {
+                    console.error(`Error details: ${error.message}`);
+                } else {
+                    console.error(`An unknown error occurred.`);
+                }
                 console.log(`Status: ❌`);
-                process.exit(1); // Exit with a non-zero status code to indicate failure
+                process.exit(1);
             }
         });
 }
