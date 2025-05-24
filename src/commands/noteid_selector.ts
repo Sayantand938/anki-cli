@@ -226,7 +226,7 @@ export async function noteidselectorAction(options: NoteIdSelectorOptions): Prom
 export function registerNoteIdSelectorCommand(program: Command) {
     program
         .command('noteid_selector')
-        .description('Fetches notes by SL (range or start+count) and copies their Note IDs to clipboard.')
+        .description('Fetches notes by SL and copies their Note IDs to clipboard.')
         .requiredOption('-s, --start <sl>', 'Starting SL for the range/selection')
         .option('-e, --end <sl>', 'Ending SL for the range (cannot be used with --count)')
         .option('-c, --count <number>', 'Number of notes to select starting from/after --start (cannot be used with --end)', s => parseInt(s, 10))

@@ -174,7 +174,7 @@ async function writeOutputToFile(outputPath: string, data: string): Promise<void
 export async function registerProcessWithGeminiCommand(program: Command) {
     program
         .command('process_with_gemini')
-        .description('Send input.json to Gemini using specified guidelines and save JSON result to output.json')
+        .description('Helper code for automate command')
         .option('-g, --guidelines <file>', 'Instruction file (e.g. tagging_instructions.md or gk_extra_instructions.md)', 'tagging_instructions.md')
         .action(async (options) => {
             let INSTRUCTION_FILE = ''; // Declare here for catch block access

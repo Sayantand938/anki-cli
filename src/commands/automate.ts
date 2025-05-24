@@ -4,7 +4,7 @@ import { execa } from 'execa';
 export function registerAutomateCommand(program: Command) {
     program
         .command('automate')
-        .description('Runs export_notes → process_with_gemini → [tag_update or extra_update or tag_check.ts] → (sl_gen only in tag mode)')
+        .description('automates different processes')
         .option('--mode <type>', 'Specify guidelines mode (e.g. tag, gk, eng, tag_check)', 'tag')
         .action(async (options) => {
             const guidelineMap: Record<string, string> = {

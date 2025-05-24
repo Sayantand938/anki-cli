@@ -191,7 +191,7 @@ async function processExtraUpdates(entries: GeminiExtraEntry[]): Promise<{ succe
 export async function registerExtraUpdateCommand(program: Command) {
     program
         .command('extra_update')
-        .description('Reads output.json and updates Anki "Extra" field content using AnkiConnect')
+        .description('Reads output.json and updates Anki "Extra" field')
         .action(async () => {
             console.log('Starting Anki extra field update process...');
             // Use path.basename() to display only the filename
