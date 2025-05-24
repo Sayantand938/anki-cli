@@ -14,6 +14,7 @@ import { registerExtraUpdateCommand } from "./commands/extra_update";
 import { registerTagCheckCommand } from "./commands/tag_check";
 import { registerInstructionsUpdateCommand } from "./commands/instructions_update";
 import { registerCleanTagsCommand } from "./commands/clean_tags";
+import { registerVocabMeaningUpdateCommand } from "./commands/vocab_meaning_update"; // Import the new command
 
 async function main() {
     program
@@ -36,6 +37,7 @@ async function main() {
     registerTagCheckCommand(program);
     registerInstructionsUpdateCommand(program);
     registerCleanTagsCommand(program);
+    registerVocabMeaningUpdateCommand(program); // Register the new command here
 
     // Add default behavior or help if no command is specified
     program.on('command:*', () => {
@@ -46,13 +48,13 @@ async function main() {
     // Parse arguments and execute corresponding command action
     await program.parseAsync(process.argv);
 
-     // If no command was matched by Commander (and arguments were provided), show error.
-     // If no arguments were provided at all, show help.
+    // If no command was matched by Commander (and arguments were provided), show error.
+    // If no arguments were provided at all, show help.
     if (process.argv.slice(2).length > 0 && !program.args.includes(process.argv[2])) {
-         if (!program.commands.map(cmd => cmd.name()).includes(process.argv[2]) && !['--help', '-h', '--version', '-V'].includes(process.argv[2])) {
-             console.error('Invalid command: %s\nSee --help for a list of available commands.', process.argv[2]);
-             process.exit(1);
-         }
+        if (!program.commands.map(cmd => cmd.name()).includes(process.argv[2]) && !['--help', '-h', '--version', '-V'].includes(process.argv[2])) {
+            console.error('Invalid command: %s\nSee --help for a list of available commands.', process.argv[2]);
+            process.exit(1);
+        }
     } else if (!process.argv.slice(2).length) {
         program.outputHelp();
     }

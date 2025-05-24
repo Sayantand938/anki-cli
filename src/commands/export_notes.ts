@@ -1,3 +1,4 @@
+// src\commands\export_notes.ts
 import { Command } from 'commander';
 import axios, { AxiosError } from 'axios'; // Import AxiosError for better type checking
 import fs from 'fs/promises';
@@ -59,11 +60,17 @@ interface FullModeNote {
     Tags: string[];
 }
 
+interface VocabModeNote {
+    noteId: number;
+    Word: string;
+    'English Meaning': string;
+}
+
 // Union type for transformed notes based on mode
-type TransformedNote = TagModeNote | GkModeNote | EngModeNote | FullModeNote;
+type TransformedNote = TagModeNote | GkModeNote | EngModeNote | FullModeNote | VocabModeNote;
 
 // Define the possible modes
-type ExportMode = 'tag' | 'gk' | 'eng' | 'full';
+type ExportMode = 'tag' | 'gk' | 'eng' | 'full' | 'vocab';
 
 // --- Utility Functions ---
 /**
@@ -140,7 +147,7 @@ async function fetchNotesFromAnki(deckName: string): Promise<AnkiConnectNoteInfo
 /**
  * Transforms AnkiConnect note data into the desired output format based on the selected mode.
  * @param notes An array of AnkiConnectNoteInfo.
- * @param mode The export mode ('tag', 'gk', 'eng', 'full').
+ * @param mode The export mode ('tag', 'gk', 'eng', 'full', 'vocab').
  * @returns An array of TransformedNote objects.
  */
 function transformAnkiNotes(notes: AnkiConnectNoteInfo[], mode: ExportMode): TransformedNote[] {
@@ -177,6 +184,12 @@ function transformAnkiNotes(notes: AnkiConnectNoteInfo[], mode: ExportMode): Tra
                     Answer: getFieldValue('Answer'),
                     Tags: tags,
                 } as EngModeNote;
+            case 'vocab':
+                return {
+                    noteId: noteId,
+                    Word: getFieldValue('Word'),
+                    'English Meaning': getFieldValue('English Meaning'),
+                } as VocabModeNote;
             case 'full':
             default:
                 return {
@@ -227,11 +240,12 @@ export function registerExportNotesCommand(program: Command) {
     program
         .command('export_notes')
         .description(`Exports notes from Anki deck "${TARGET_ANKI_DECK_NAME}"`)
-        .option('-m, --mode <mode>', 'Export mode: tag, gk, eng, full', 'full') // Added --mode option with default 'full'
+        .option('-m, --mode <mode>', 'Export mode: tag, gk, eng, full, vocab', 'full') // Added 'vocab' to the options
         .action(async (options) => {
-            const mode: ExportMode = options.mode.toLowerCase(); // Get the selected mode
+            const mode: ExportMode = options.mode.toLowerCase() as ExportMode; // Get the selected mode and cast it
+
             // Validate the mode
-            const validModes: ExportMode[] = ['tag', 'gk', 'eng', 'full'];
+            const validModes: ExportMode[] = ['tag', 'gk', 'eng', 'full', 'vocab'];
             if (!validModes.includes(mode)) {
                 console.error(`Invalid mode "${mode}". Valid modes are: ${validModes.join(', ')}`);
                 process.exit(1);
