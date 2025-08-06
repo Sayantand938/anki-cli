@@ -1,0 +1,287 @@
+
+:root {
+  --font-primary: "JetBrains Mono", "Hind Siliguri", monospace;
+  --font-tags: "Martian Mono", monospace;
+  --font-size-base: 20px;
+  --line-height-base: 1.5;
+  --padding-body: 20px;
+  --font-weight-base: 500;
+
+  --color-text: white;
+  --color-background: #2c2c2c;
+  --color-hr: white;
+  --color-table-border: #ddd;
+  --color-table-header-bg: #4e4e4e;
+
+  --color-radio-default-fill: #2c2c2c;
+  --color-radio-default-stroke: #888888;
+  --color-radio-hover-stroke: #aaaaaa;
+  --color-radio-focus-stroke: #bbbbbb;
+  --color-radio-neutral-stroke: #888888;
+
+  --color-feedback-correct: #00d26a;
+  --color-feedback-incorrect: #d32f2f;
+  --color-feedback-icon: white;
+
+  --color-tag-default: gold;
+  --color-tag-hard: red;
+  --color-tag-formula: #b4bfff;
+  --tag-border-thickness: 4px;
+  --tag-padding: 5px 8px;
+  --tag-font-size: 18px;
+  --tag-margin-bottom: 15px;
+}
+
+body, .card {
+  background-color: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-primary);
+  line-height: var(--line-height-base);
+  font-size: var(--font-size-base);
+  padding-left: var(--padding-body);
+  padding-right: var(--padding-body);
+  font-weight: var(--font-weight-base);
+
+  box-sizing: border-box;
+  /* Hide scrollbar for IE, Edge and Firefox */
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+body::-webkit-scrollbar, .card::-webkit-scrollbar {
+  display: none;
+}
+
+
+html, body {
+  overflow-x: hidden;
+}
+
+form {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+form input[type="radio"] {
+  display: none;
+}
+
+.custom-radio {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  width: 100%;
+  padding: 5px 0;
+}
+
+.radio-icon {
+  width: 24px;
+  height: 24px;
+  margin-right: 10px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+.radio-circle-bg {
+  fill: var(--color-radio-default-fill);
+  stroke: var(--color-radio-default-stroke);
+  stroke-width: 3;
+  transition: fill 0.2s ease, stroke 0.2s ease;
+}
+
+.custom-radio:hover input[type="radio"]:not(:disabled) + .radio-icon .radio-circle-bg {
+  stroke: var(--color-radio-hover-stroke);
+}
+
+.custom-radio input[type="radio"]:focus-visible + .radio-icon .radio-circle-bg {
+   outline: 2px solid var(--color-radio-focus-stroke);
+   outline-offset: 2px;
+}
+
+.radio-circle-bg.correct {
+  fill: var(--color-feedback-correct);
+  stroke: var(--color-feedback-correct);
+}
+
+.radio-circle-bg.incorrect {
+  fill: var(--color-feedback-incorrect);
+  stroke: var(--color-feedback-incorrect);
+}
+
+.radio-circle-bg.neutral {
+  fill: var(--color-radio-default-fill);
+  stroke: var(--color-radio-neutral-stroke);
+}
+
+.icon-path {
+    stroke: var(--color-feedback-icon);
+    stroke-width: 3;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.custom-radio span {
+  word-break: break-word;
+  overflow-wrap: break-word;
+  flex-grow: 1;
+}
+
+hr {
+  border: none;
+  height: 2px;
+  background-color: var(--color-hr);
+  margin: 20px 0;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 20px 0;
+}
+
+th, td {
+  border: 2px solid var(--color-table-border);
+  padding: 8px;
+  text-align: left;
+}
+
+th {
+  background-color: var(--color-table-header-bg);
+}
+
+.tag-container {
+   margin-bottom: var(--tag-margin-bottom);
+   display: flex;
+   flex-wrap: wrap;
+   gap: 8px;
+}
+
+.tag {
+  font-family: var(--font-tags);
+  font-weight: bold;
+  display: inline-block;
+  padding: var(--tag-padding);
+  font-size: var(--tag-font-size);
+  border-bottom: var(--tag-border-thickness) solid var(--color-tag-default);
+  color: var(--color-tag-default);
+  line-height: 1.2;
+}
+
+.tag-hard {
+  border-bottom-color: var(--color-tag-hard);
+  color: var(--color-tag-hard);
+}
+
+.tag-formula {
+  border-bottom-color: var(--color-tag-formula);
+  color: var(--color-tag-formula);
+}
+
+li {
+  margin-top: 10px;
+  margin-left: 0px;
+}
+
+
+.Question ul,
+.Question ol {
+  margin-left: -15px;
+}
+
+.replay-button.soundLink,
+.replay-button.soundLink ~ div {
+    display: none !important;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url("_JetBrainsMono-Medium.ttf");
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Martian Mono';
+  src: url("_MartianMono-Regular.ttf");
+  font-weight: normal;
+  font-style: normal;
+}
+
+.android .card {
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+#_flag[style*="color: var(--flag-1);"] { font-size: 0; }
+#_flag[style*="color: var(--flag-1);"]::before {
+    content: url("data:image/svg+xml,%3Csvg viewBox='0 0 1024 1024' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M789.333333 917.333333l-277.333333-128-277.333333 128V192c0-46.933333 38.4-85.333333 85.333333-85.333333h384c46.933333 0 85.333333 38.4 85.333333 85.333333v725.333333z' fill='%23F44336'/%3E%3C/svg%3E");
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    vertical-align: middle;
+    font-size: 25px;
+}
+
+#_flag[style*="color: var(--flag-2);"] { font-size: 0; }
+#_flag[style*="color: var(--flag-2);"]::before {
+    content: url("data:image/svg+xml,%3Csvg viewBox='0 0 1024 1024' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M789.333333 917.333333l-277.333333-128-277.333333 128V192c0-46.933333 38.4-85.333333 85.333333-85.333333h384c46.933333 0 85.333333 38.4 85.333333 85.333333v725.333333z' fill='%23FFD700'/%3E%3C/svg%3E");
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    vertical-align: middle;
+    font-size: 25px;
+}
+
+#_flag[style*="color: var(--flag-3);"] { font-size: 0; }
+#_flag[style*="color: var(--flag-3);"]::before {
+    content: url("data:image/svg+xml,%3Csvg viewBox='0 0 1024 1024' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M789.333333 917.333333l-277.333333-128-277.333333 128V192c0-46.933333 38.4-85.333333 85.333333-85.333333h384c46.933333 0 85.333333 38.4 85.333333 85.333333v725.333333z' fill='%234CAF50'/%3E%3C/svg%3E");
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    vertical-align: middle;
+    font-size: 25px;
+}
+
+#_flag[style*="color: var(--flag-4);"] { font-size: 0; }
+#_flag[style*="color: var(--flag-4);"]::before {
+    content: url("data:image/svg+xml,%3Csvg viewBox='0 0 1024 1024' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M789.333333 917.333333l-277.333333-128-277.333333 128V192c0-46.933333 38.4-85.333333 85.333333-85.333333h384c46.933333 0 85.333333 38.4 85.333333 85.333333v725.333333z' fill='%23FFFFFF'/%3E%3C/svg%3E");
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    vertical-align: middle;
+    font-size: 25px;
+}
+
+#_flag[style*="color: var(--flag-5);"] { font-size: 0; }
+#_flag[style*="color: var(--flag-5);"]::before {
+    content: url("data:image/svg+xml,%3Csvg viewBox='0 0 1024 1024' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M789.333333 917.333333l-277.333333-128-277.333333 128V192c0-46.933333 38.4-85.333333 85.333333-85.333333h384c46.933333 0 85.333333 38.4 85.333333 85.333333v725.333333z' fill='%2300BCD4'/%3E%3C/svg%3E");
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    vertical-align: middle;
+    font-size: 25px;
+}
+
+#_flag[style*="color: var(--flag-6);"] { font-size: 0; }
+#_flag[style*="color: var(--flag-6);"]::before {
+    content: url("data:image/svg+xml,%3Csvg viewBox='0 0 1024 1024' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M789.333333 917.333333l-277.333333-128-277.333333 128V192c0-46.933333 38.4-85.333333 85.333333-85.333333h384c46.933333 0 85.333333 38.4 85.333333 85.333333v725.333333z' fill='%23FF9800'/%3E%3C/svg%3E");
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    vertical-align: middle;
+    font-size: 25px;
+}
+
+#_flag[style*="color: var(--flag-7);"] { font-size: 0; }
+#_flag[style*="color: var(--flag-7);"]::before {
+    content: url("data:image/svg+xml,%3Csvg viewBox='0 0 1024 1024' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M789.333333 917.333333l-277.333333-128-277.333333 128V192c0-46.933333 38.4-85.333333 85.333333-85.333333h384c46.933333 0 85.333333 38.4 85.333333 85.333333v725.333333z' fill='%23E91E63'/%3E%3C/svg%3E");
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    vertical-align: middle;
+    font-size: 25px;
+}

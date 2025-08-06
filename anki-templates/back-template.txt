@@ -1,0 +1,129 @@
+<div class="tag-container" id="tags"></div>
+<div class="Question">{{Question}}</div>
+
+<form role="radiogroup">
+  <label class="custom-radio">
+    <input type="radio" name="option" value="1" disabled>
+    <svg class="radio-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="12" cy="12" r="10" class="radio-circle-bg" stroke-width="3"/>
+    </svg>
+    <span id="op1">{{OP1}}</span>
+  </label>
+  <label class="custom-radio">
+    <input type="radio" name="option" value="2" disabled>
+    <svg class="radio-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="12" cy="12" r="10" class="radio-circle-bg" stroke-width="3"/>
+    </svg>
+    <span id="op2">{{OP2}}</span>
+  </label>
+  <label class="custom-radio">
+    <input type="radio" name="option" value="3" disabled>
+    <svg class="radio-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="12" cy="12" r="10" class="radio-circle-bg" stroke-width="3"/>
+    </svg>
+    <span id="op3">{{OP3}}</span>
+  </label>
+  <label class="custom-radio">
+    <input type="radio" name="option" value="4" disabled>
+    <svg class="radio-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="12" cy="12" r="10" class="radio-circle-bg" stroke-width="3"/>
+    </svg>
+    <span id="op4">{{OP4}}</span>
+  </label>
+</form>
+
+<div>{{Video}}</div>
+
+<script>
+  (function() {
+    const tagsContainer = document.getElementById('tags');
+    const rawTags = '{{Tags}}';
+    const correctAnswerValue = '{{Answer}}';
+    const selectedOptionValue = localStorage.getItem('selectedOption');
+    const validOptionValues = ['1', '2', '3', '4'];
+    const radioInputs = {
+      '1': document.querySelector('input[name="option"][value="1"]'),
+      '2': document.querySelector('input[name="option"][value="2"]'),
+      '3': document.querySelector('input[name="option"][value="3"]'),
+      '4': document.querySelector('input[name="option"][value="4"]')
+    };
+
+    function displayFilteredTags(tagsString, containerElement) {
+      const allowedPrefixes = ['MATH::', 'ENG::', 'GI::', 'GK::'];
+      const allowedExactTags = ['H-1', 'H-2', 'Formula'];
+
+      const tagsArray = tagsString.split(' ')
+        .map(tag => tag.trim())
+        .filter(tag => tag.length > 0)
+        .filter(tag => {
+          if (!tag) return false;
+          if (allowedExactTags.includes(tag)) return true;
+          return allowedPrefixes.some(prefix => tag.startsWith(prefix));
+        });
+
+      const tagsHtml = tagsArray.map(tag => {
+        let className = 'tag';
+        if (tag === 'Hard') {
+          className = 'tag tag-hard';
+        } else if (tag === 'Formula') {
+          className = 'tag tag-formula';
+        }
+        return `<span class="${className}">${tag}</span>`;
+      }).join('');
+
+      if (containerElement) {
+        containerElement.innerHTML = tagsHtml;
+      }
+    }
+
+    if (tagsContainer && rawTags) {
+      displayFilteredTags(rawTags, tagsContainer);
+    }
+
+    function applyFeedbackStyles(optionValue, isCorrectAnswer, wasSelectedByUser) {
+      const radioInput = radioInputs[optionValue];
+      if (!radioInput) return;
+      const label = radioInput.closest('label.custom-radio');
+      if (!label) return;
+      const svg = label.querySelector('svg.radio-icon');
+      if (!svg) return;
+      const circle = svg.querySelector('circle.radio-circle-bg');
+      if (!circle) return;
+
+      const existingPaths = svg.querySelectorAll('path');
+      existingPaths.forEach(path => path.remove());
+
+      let iconPath = '';
+      let circleClass = 'radio-circle-bg ';
+      if (isCorrectAnswer) {
+        circleClass += 'correct';
+        iconPath = '<path d="M6 12l4 4 8-8" class="icon-path correct-icon"/>';
+      } else if (wasSelectedByUser) {
+        circleClass += 'incorrect';
+        iconPath = '<path d="M8 8 l8 8 M16 8 L8 16" class="icon-path incorrect-icon"/>';
+      } else {
+        circleClass += 'neutral';
+      }
+
+      circle.setAttribute('class', circleClass.trim());
+      if (iconPath) {
+        svg.insertAdjacentHTML('beforeend', iconPath);
+      }
+    }
+
+    validOptionValues.forEach(optionVal => {
+      if (radioInputs[optionVal]) {
+        const isCorrect = (optionVal === correctAnswerValue && validOptionValues.includes(correctAnswerValue));
+        const isSelected = (optionVal === selectedOptionValue && validOptionValues.includes(selectedOptionValue));
+        applyFeedbackStyles(optionVal, isCorrect, isSelected);
+      }
+    });
+
+    localStorage.removeItem('selectedOption');
+  })();
+</script>
+
+{{#Extra}}
+<hr>
+<div class="Extra">{{Extra}}</div>
+{{/Extra}}
