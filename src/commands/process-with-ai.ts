@@ -45,12 +45,15 @@ const readJsonInput = async (): Promise<Note[]> => {
   } catch (error: any) {
     if (error.code === 'ENOENT') throw new Error(`[FAIL] ${INPUT_JSON_FILENAME} is not present`);
     if (error instanceof z.ZodError) {
-      const issues = error.errors.map(e => `  - Path: ${e.path.join('.')}, Message: ${e.message}`).join('\n');
+      const issues = error.issues
+        .map((e: z.ZodIssue) => `  - Path: ${e.path.join('.')}, Message: ${e.message}`)
+        .join('\n');
       throw new Error(`[FAIL] Zod validation failed for ${INPUT_JSON_FILENAME}:\n${issues}`);
     }
     throw error;
   }
 };
+
 
 const readInstruction = async (filename: string): Promise<string> =>
   fs.readFile(path.join(INSTRUCTIONS_DIR, filename), 'utf-8');

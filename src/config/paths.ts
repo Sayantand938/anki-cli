@@ -12,7 +12,7 @@ const paths = envPaths(APP_NAME, { suffix: '' });
 export const ANKI_EXECUTABLE_PATH = 'C:\\Users\\sayantan\\AppData\\Local\\Programs\\Anki\\anki.exe';
 
 /** The absolute path to your Anki user profile's media collection folder. */
-export const ANKI_MEDIA_COLLECTION_PATH = 'D:\\AnkiData\\NOTES-1\\collection.media';
+export const ANKI_MEDIA_COLLECTION_PATH = 'D:\\AnkiData\\NOTES\\collection.media';
 
 /** The directory to store all application data files. */
 export const DATA_DIR = paths.data;
