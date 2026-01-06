@@ -142,7 +142,8 @@ vite.config.ts.timestamp-*
 
 
 # DB Files
-.db
+*.db
+
 
 
 # Data Folder
