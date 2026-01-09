@@ -1,0 +1,10 @@
+{
+    "anki_path": "C:\\Users\\sayantan\\AppData\\Roaming\\Anki2\\NOTES\\collection.anki2",
+    "start_date": "2026-01-01",
+    "quotas": {
+        "MATH": {"NEW": 30,  "DUE": 60},
+        "GI":   {"NEW": 30,  "DUE": 60},
+        "ENG":  {"NEW": 45,  "DUE": 90},
+        "GK":   {"NEW": 100, "DUE": 200}
+    }
+}
